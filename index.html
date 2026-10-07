@@ -11,402 +11,1528 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-512.png">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  html { scroll-behavior: smooth; }
+  :root {
+    --bg1:#0b3d2e; --bg2:#145c43; --bg3:#0b3d2e;
+    --card:rgba(255,255,255,0.07); --card-hover:rgba(255,255,255,0.13);
+    --border:rgba(255,255,255,0.12); --text:#f0f7f2; --text-dim:#cfe8d9;
+    --gold:#ffe9a8; --gold-dim:rgba(255,233,168,0.4); --green:#1e7a58;
+    --num-bg:#ffe9a8; --num-text:#0b3d2e; --arabic:#fff8e1;
+    --shadow:0 8px 24px rgba(0,0,0,0.25);
+  }
+  [data-theme="light"] {
+    --bg1:#f4f9f4; --bg2:#e6f0e6; --bg3:#f4f9f4;
+    --card:#ffffff; --card-hover:#f9fdf9; --border:#d4e5d4;
+    --text:#0b3d2e; --text-dim:#4a6b58; --gold:#b8860b;
+    --gold-dim:rgba(184,134,11,0.3); --green:#1e7a58;
+    --num-bg:#1e7a58; --num-text:#ffffff; --arabic:#0b3d2e;
+    --shadow:0 4px 16px rgba(0,0,0,0.08);
+  }
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html { scroll-behavior:smooth; }
   body {
-    font-family: 'Noto Sans Bengali', 'Segoe UI', Tahoma, sans-serif;
-    background: linear-gradient(160deg, #0b3d2e, #145c43, #0b3d2e);
-    background-attachment: fixed;
-    color: #f0f7f2;
-    padding: 16px;
-    padding-top: env(safe-area-inset-top, 16px);
-    padding-bottom: env(safe-area-inset-bottom, 16px);
-    min-height: 100vh;
-    overscroll-behavior-y: contain;
+    font-family:'Noto Sans Bengali','Segoe UI',Tahoma,sans-serif;
+    background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));
+    background-attachment:fixed; color:var(--text);
+    min-height:100vh; overscroll-behavior-y:contain;
+    transition:background .3s,color .3s;
   }
-  header {
-    text-align: center;
-    padding: 18px 10px;
-    background: rgba(255,255,255,0.08);
-    border-radius: 16px;
-    margin-bottom: 18px;
-    border: 1px solid rgba(255,255,255,0.15);
-  }
-  header h1 { font-size: 1.6rem; color: #ffe9a8; }
-  header p { font-size: 0.9rem; margin-top: 6px; color: #cfe8d9; }
 
+  /* ==== টপবার ==== */
+  .topbar {
+    position:sticky; top:0; z-index:50;
+    background:rgba(11,61,46,0.92);
+    backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--border);
+    padding:12px 16px;
+    padding-top:calc(12px + env(safe-area-inset-top,0px));
+    display:flex; align-items:center; gap:10px;
+  }
+  [data-theme="light"] .topbar { background:rgba(255,255,255,0.92); }
+  .topbar .logo {
+    width:38px; height:38px; border-radius:10px;
+    background:var(--gold); display:flex; align-items:center;
+    justify-content:center; font-size:20px; flex-shrink:0;
+  }
+  .topbar .titles { flex:1; min-width:0; }
+  .topbar h1 { font-size:1rem; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .topbar .sub { font-size:0.7rem; color:var(--text-dim); margin-top:1px; }
+  .icon-btn {
+    width:40px; height:40px; border-radius:10px;
+    background:var(--card); border:1px solid var(--border);
+    color:var(--text); font-size:18px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:background .2s,transform .1s; flex-shrink:0;
+  }
+  .icon-btn:active { transform:scale(0.92); background:var(--card-hover); }
+
+  /* ==== নামাজ বার ==== */
+  .prayer-bar {
+    display:flex; gap:6px;
+    padding:10px 16px 6px;
+    overflow-x:auto;
+    scrollbar-width:none;
+  }
+  .prayer-bar::-webkit-scrollbar { display:none; }
+  .prayer-item {
+    flex:1; min-width:70px;
+    background:var(--card); border:1px solid var(--border);
+    border-radius:12px; padding:8px 6px; text-align:center;
+    transition:background .2s;
+  }
+  .prayer-item.next {
+    background:linear-gradient(135deg,var(--green),#2ecc71);
+    border-color:transparent;
+  }
+  .prayer-item .name { font-size:0.7rem; color:var(--text-dim); font-weight:600; }
+  .prayer-item.next .name { color:#fff; }
+  .prayer-item .time { font-size:0.85rem; font-weight:700; color:var(--gold); margin-top:2px; }
+  .prayer-item.next .time { color:#fff; }
+  .next-prayer-info {
+    margin:0 16px 8px;
+    padding:8px 12px;
+    background:linear-gradient(90deg,rgba(30,122,88,0.4),rgba(46,204,113,0.2));
+    border:1px solid var(--green);
+    border-radius:10px;
+    font-size:0.8rem;
+    color:var(--text);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .next-prayer-info .countdown {
+    font-weight:700;
+    color:var(--gold);
+    font-variant-numeric:tabular-nums;
+  }
+
+  /* ==== সার্চ ==== */
+  .search-wrap { padding:8px 16px; }
+  .search-box {
+    width:100%; padding:12px 16px 12px 42px;
+    border-radius:12px; border:1px solid var(--border);
+    background:var(--card); color:var(--text);
+    font-size:0.95rem; font-family:inherit; outline:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='%23ffe9a8' viewBox='0 0 24 24'><path d='M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z'/></svg>");
+    background-repeat:no-repeat; background-position:14px center;
+  }
+  .search-box::placeholder { color:var(--text-dim); }
+
+  #offlineBar {
+    display:none; margin:0 16px 8px;
+    background:#c0392b; color:#fff; text-align:center;
+    padding:8px; border-radius:10px; font-size:0.85rem;
+  }
+  #offlineBar.show { display:block; }
+
+  /* ==== স্ট্যাটস ==== */
+  .stats {
+    display:grid; grid-template-columns:repeat(3,1fr);
+    gap:8px; padding:4px 16px 12px;
+  }
+  .stat {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:12px; padding:10px 8px; text-align:center;
+  }
+  .stat .val { font-size:1.15rem; font-weight:700; color:var(--gold); }
+  .stat .lbl { font-size:0.7rem; color:var(--text-dim); margin-top:2px; }
+
+  .container { padding:0 16px; padding-bottom:110px; }
+
+  /* ==== কার্ড ==== */
   .card {
-    background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 14px;
-    padding: 14px 16px;
-    margin-bottom: 12px;
-    transition: transform .2s, background .2s;
+    background:var(--card); border:1px solid var(--border);
+    border-radius:16px; padding:16px; margin-bottom:12px;
+    box-shadow:var(--shadow);
+    transition:transform .2s,background .2s,opacity .3s;
+    animation:fadeIn .4s ease;
   }
-  .card:active { background: rgba(255,255,255,0.14); }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
+  .card:hover { background:var(--card-hover); }
+  .card.done { opacity:0.55; }
+  .card.done .num { background:#2ecc71; color:#fff; }
 
-  .num {
-    display: inline-block;
-    background: #ffe9a8;
-    color: #0b3d2e;
-    font-weight: bold;
-    border-radius: 50%;
-    width: 28px; height: 28px;
-    line-height: 28px;
-    text-align: center;
-    font-size: 0.85rem;
-    margin-left: 6px;
-  }
   .title {
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: #ffffff;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
+    font-size:1.05rem; font-weight:700; color:var(--text);
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  }
+  .num {
+    display:inline-flex; align-items:center; justify-content:center;
+    background:var(--num-bg); color:var(--num-text);
+    font-weight:700; border-radius:50%;
+    width:30px; height:30px; font-size:0.85rem; flex-shrink:0;
+    transition:background .3s;
   }
   .count {
-    background: #1e7a58;
-    color: #eafff4;
-    font-size: 0.75rem;
-    padding: 3px 10px;
-    border-radius: 20px;
-    margin-right: auto;
+    background:var(--green); color:#eafff4;
+    font-size:0.72rem; padding:4px 10px;
+    border-radius:20px; font-weight:600;
   }
   .arabic {
-    direction: rtl;
-    font-family: 'Traditional Arabic', 'Amiri', 'Scheherazade New', serif;
-    font-size: 1.5rem;
-    line-height: 2.4rem;
-    text-align: right;
-    margin: 10px 0 6px;
-    color: #fff8e1;
+    direction:rtl;
+    font-family:'Traditional Arabic','Amiri','Scheherazade New',serif;
+    font-size:1.55rem; line-height:2.5rem;
+    text-align:right; margin:12px 0 8px; color:var(--arabic);
   }
   .bismillah {
-    display: block;
-    text-align: center;
-    color: #ffe9a8;
-    font-size: 1.6rem;
-    margin-bottom: 8px;
-    padding-bottom: 6px;
-    border-bottom: 1px dashed rgba(255,233,168,0.4);
+    display:block; text-align:center;
+    color:var(--gold); font-size:1.6rem;
+    margin-bottom:10px; padding-bottom:8px;
+    border-bottom:1px dashed var(--gold-dim);
   }
   .bangla {
-    font-size: 0.92rem;
-    color: #d7ecdf;
-    line-height: 1.6;
-    margin-top: 4px;
+    font-size:0.93rem; color:var(--text-dim);
+    line-height:1.65; margin-top:4px;
   }
   .note {
-    font-size: 0.85rem;
-    color: #ffe9a8;
-    margin-top: 6px;
-    font-style: italic;
+    font-size:0.85rem; color:var(--gold);
+    margin-top:8px; font-style:italic;
+    padding-left:10px; border-left:3px solid var(--gold-dim);
   }
+  .card-actions {
+    display:flex; gap:8px; margin-top:12px;
+    padding-top:10px; border-top:1px solid var(--border);
+  }
+  .btn {
+    flex:1; padding:9px 12px; border-radius:10px;
+    border:1px solid var(--border); background:var(--card);
+    color:var(--text); font-size:0.85rem; font-family:inherit;
+    cursor:pointer; display:flex; align-items:center;
+    justify-content:center; gap:6px;
+    transition:transform .1s,background .2s; font-weight:600;
+  }
+  .btn:active { transform:scale(0.96); background:var(--card-hover); }
+  .btn.primary { background:var(--green); color:#fff; border-color:transparent; }
+  .btn.gold { background:var(--gold); color:#0b3d2e; border-color:transparent; }
+  .btn.done { background:#2ecc71; color:#fff; border-color:transparent; }
+  .btn.red { background:#c0392b; color:#fff; border-color:transparent; }
+
+  .counter {
+    display:flex; align-items:center; justify-content:center;
+    gap:10px; margin-top:12px; padding-top:10px;
+    border-top:1px solid var(--border);
+  }
+  .counter-btn {
+    width:42px; height:42px; border-radius:50%;
+    background:var(--card); border:1px solid var(--border);
+    color:var(--text); font-size:20px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:transform .1s,background .2s; font-weight:700;
+  }
+  .counter-btn:active { transform:scale(0.9); }
+  .counter-btn.minus { background:rgba(192,57,43,0.2); color:#ff8a80; }
+  .counter-btn.plus { background:rgba(46,204,113,0.2); color:#6ee7a6; }
+  .counter-val {
+    font-size:1.4rem; font-weight:700; color:var(--gold);
+    min-width:70px; text-align:center; font-variant-numeric:tabular-nums;
+  }
+  .counter-val small { font-size:0.7rem; color:var(--text-dim); font-weight:400; margin-left:3px; }
+
   .time-badge {
-    display: inline-block;
-    background: #c0392b;
-    color: #fff;
-    font-size: 0.75rem;
-    padding: 3px 10px;
-    border-radius: 20px;
-    margin-top: 8px;
-    margin-left: 6px;
+    display:inline-block; background:#c0392b; color:#fff;
+    font-size:0.72rem; padding:4px 12px; border-radius:20px; font-weight:600;
   }
-  .time-badge.fajr { background: #2980b9; }
-  .time-badge.maghrib { background: #d35400; }
-  .time-badge.isha { background: #6c3483; }
+  .time-badge.fajr { background:#2980b9; }
+  .time-badge.maghrib { background:#d35400; }
+  .time-badge.isha { background:#6c3483; }
+  .time-section {
+    margin-top:14px; padding:12px;
+    background:rgba(0,0,0,0.15); border-radius:12px;
+  }
+  [data-theme="light"] .time-section { background:rgba(0,0,0,0.04); }
 
-  /* টপে ফ্লোটিং আপ বাটন */
+  .progress-wrap { padding:0 16px 12px; }
+  .progress-label {
+    display:flex; justify-content:space-between;
+    font-size:0.78rem; color:var(--text-dim); margin-bottom:6px;
+  }
+  .progress-bar {
+    height:8px; background:var(--card);
+    border:1px solid var(--border); border-radius:10px; overflow:hidden;
+  }
+  .progress-fill {
+    height:100%; background:linear-gradient(90deg,var(--gold),#ffb74d);
+    border-radius:10px; width:0%; transition:width .4s ease;
+  }
+
+  /* ==== বটম নেভিগেশন ==== */
+  .bottombar {
+    position:fixed; bottom:0; left:0; right:0;
+    background:rgba(11,61,46,0.95);
+    backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    border-top:1px solid var(--border);
+    display:flex; padding:8px 8px;
+    padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));
+    z-index:50;
+  }
+  [data-theme="light"] .bottombar { background:rgba(255,255,255,0.95); }
+  .nav-btn {
+    flex:1; background:transparent; border:none;
+    color:var(--text-dim); font-family:inherit;
+    font-size:0.7rem; padding:6px 2px; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center;
+    gap:3px; border-radius:10px;
+    transition:background .2s,color .2s; font-weight:600;
+  }
+  .nav-btn .ico { font-size:20px; line-height:1; }
+  .nav-btn.active { color:var(--gold); background:rgba(255,233,168,0.1); }
+  .nav-btn:active { background:var(--card); }
+
+  /* ==== পেজ ট্যাব ==== */
+  .page { display:none; }
+  .page.active { display:block; }
+
+  /* ==== প্যানেল ==== */
+  .panel {
+    position:fixed; inset:0; background:rgba(0,0,0,0.6);
+    z-index:100; display:none; align-items:flex-end;
+  }
+  .panel.open { display:flex; }
+  .panel-content {
+    width:100%; background:var(--bg1);
+    border-radius:20px 20px 0 0; padding:20px;
+    padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));
+    animation:slideUp .3s ease;
+    max-height:85vh; overflow-y:auto;
+  }
+  @keyframes slideUp { from{transform:translateY(100%);} to{transform:translateY(0);} }
+  .panel-content h2 {
+    color:var(--gold); margin-bottom:16px; font-size:1.15rem;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .setting-row {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 4px; border-bottom:1px solid var(--border);
+  }
+  .setting-row label { font-size:0.95rem; color:var(--text); }
+  .setting-row .hint {
+    display:block; font-size:0.75rem;
+    color:var(--text-dim); margin-top:2px;
+  }
+  .switch {
+    position:relative; width:48px; height:26px;
+    background:var(--border); border-radius:20px;
+    cursor:pointer; transition:background .2s; flex-shrink:0;
+  }
+  .switch::after {
+    content:''; position:absolute; top:3px; left:3px;
+    width:20px; height:20px; background:#fff;
+    border-radius:50%; transition:transform .2s;
+    box-shadow:0 2px 4px rgba(0,0,0,0.3);
+  }
+  .switch.on { background:var(--green); }
+  .switch.on::after { transform:translateX(22px); }
+
+  /* ==== ফ্লোটিং তাসবিহ কাউন্টার ==== */
+  #tasbihBtn {
+    position:fixed; bottom:100px; right:16px;
+    background:var(--gold); color:#0b3d2e;
+    border-radius:50%; width:56px; height:56px;
+    display:flex; align-items:center; justify-content:center;
+    flex-direction:column; box-shadow:0 6px 20px rgba(0,0,0,0.4);
+    z-index:60; cursor:pointer; font-weight:700;
+    font-size:0.65rem; border:none; font-family:inherit;
+  }
+  #tasbihBtn .big { font-size:1.2rem; line-height:1; }
+
+  /* ==== টোস্ট ==== */
+  #toast {
+    position:fixed; bottom:110px; left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:rgba(0,0,0,0.9); color:#fff;
+    padding:10px 20px; border-radius:24px;
+    font-size:0.85rem; opacity:0; pointer-events:none;
+    transition:opacity .3s,transform .3s; z-index:200;
+    max-width:85%; text-align:center;
+  }
+  #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
   #topBtn {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: #ffe9a8;
-    color: #0b3d2e;
-    border: none;
-    font-size: 22px;
-    font-weight: bold;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-    cursor: pointer;
-    display: none;
-    z-index: 99;
-    padding-bottom: 4px;
-    padding-bottom: calc(4px + env(safe-area-inset-bottom, 0));
+    position:fixed; bottom:100px; right:16px;
+    width:44px; height:44px; border-radius:50%;
+    background:var(--card); border:1px solid var(--border);
+    color:var(--text); font-size:20px; font-weight:700;
+    box-shadow:var(--shadow); cursor:pointer;
+    display:none; z-index:55; backdrop-filter:blur(10px);
   }
-  #topBtn.show { display: block; }
-
-  /* অফলাইন স্ট্যাটাস */
-  #offlineBar {
-    display: none;
-    background: #c0392b;
-    color: #fff;
-    text-align: center;
-    padding: 6px;
-    border-radius: 10px;
-    margin-bottom: 12px;
-    font-size: 0.85rem;
-  }
-  #offlineBar.show { display: block; }
+  #topBtn.show { display:flex; align-items:center; justify-content:center; }
 
   footer {
-    text-align: center;
-    font-size: 0.8rem;
-    color: #a8c9b8;
-    padding: 20px 0 60px;
+    text-align:center; font-size:0.78rem;
+    color:var(--text-dim); padding:20px 16px 30px;
+  }
+
+  .section-header {
+    font-size:0.8rem; font-weight:700; color:var(--gold);
+    text-transform:uppercase; letter-spacing:0.5px;
+    margin:20px 4px 10px; display:flex; align-items:center; gap:8px;
+  }
+  .section-header::before {
+    content:''; width:4px; height:16px;
+    background:var(--gold); border-radius:2px;
+  }
+
+  .empty {
+    text-align:center; padding:40px 20px; color:var(--text-dim);
+  }
+  .empty .ico { font-size:48px; margin-bottom:12px; }
+
+  /* ==== তাসবিহ পেজ ==== */
+  .tasbih-big {
+    text-align:center;
+    padding:30px 20px;
+  }
+  .tasbih-count {
+    font-size:5rem;
+    font-weight:800;
+    color:var(--gold);
+    line-height:1;
+    font-variant-numeric:tabular-nums;
+    margin-bottom:10px;
+    text-shadow:0 4px 20px rgba(255,233,168,0.3);
+  }
+  .tasbih-target {
+    font-size:1rem;
+    color:var(--text-dim);
+    margin-bottom:24px;
+  }
+  .tasbih-main-btn {
+    width:180px; height:180px;
+    border-radius:50%;
+    background:linear-gradient(135deg,var(--green),#2ecc71);
+    border:none; color:#fff;
+    font-size:2.5rem;
+    font-weight:800;
+    cursor:pointer;
+    box-shadow:0 10px 40px rgba(30,122,88,0.5);
+    transition:transform .1s;
+    font-family:inherit;
+    margin:0 auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+  }
+  .tasbih-main-btn:active { transform:scale(0.94); }
+  .tasbih-main-btn small { font-size:0.9rem; font-weight:500; margin-top:6px; opacity:0.9; }
+  .tasbih-actions {
+    display:flex; gap:10px; justify-content:center;
+    margin-top:24px; flex-wrap:wrap;
+  }
+  .tasbih-actions .btn { flex:0 1 auto; padding:10px 20px; }
+  .tasbih-targets {
+    display:flex; gap:8px; justify-content:center;
+    margin-top:16px; flex-wrap:wrap;
+  }
+  .target-chip {
+    padding:6px 14px;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:20px;
+    font-size:0.8rem;
+    cursor:pointer;
+    color:var(--text);
+    font-weight:600;
+  }
+  .target-chip.active {
+    background:var(--gold);
+    color:#0b3d2e;
+    border-color:transparent;
+  }
+
+  /* ==== দোয়া তালিকা ==== */
+  .dua-cat {
+    display:flex;
+    gap:6px;
+    padding:0 16px 12px;
+    overflow-x:auto;
+    scrollbar-width:none;
+  }
+  .dua-cat::-webkit-scrollbar { display:none; }
+  .cat-chip {
+    padding:7px 14px;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:20px;
+    font-size:0.8rem;
+    cursor:pointer;
+    color:var(--text);
+    white-space:nowrap;
+    font-weight:600;
+  }
+  .cat-chip.active {
+    background:var(--gold);
+    color:#0b3d2e;
+    border-color:transparent;
   }
 </style>
 </head>
 <body>
 
-<header>
-  <h1>🌅 সকাল-সন্ধ্যা আমল 🌙</h1>
-  <p>আরবি • উচ্চারণ • অর্থ • সংখ্যা</p>
-</header>
-
-<div id="offlineBar">📴 অফলাইন মোড — কনটেন্ট ক্যাশ থেকে লোড হয়েছে</div>
-
-<!-- ০ -->
-<div class="card">
-  <div class="title"><span class="num">০</span> আল্লাহু আকবার <span class="count">১ বার</span></div>
-  <div class="arabic">اللهُ أَكْبَرُ</div>
-  <div class="bangla">আল্লাহু আকবার — আল্লাহ সর্বশ্রেষ্ঠ।</div>
-</div>
-
-<!-- ১ -->
-<div class="card">
-  <div class="title"><span class="num">১</span> ইস্তেগফার <span class="count">৩ বার</span></div>
-  <div class="arabic">أَسْتَغْفِرُ اللهَ</div>
-  <div class="bangla">আস্তাগফিরুল্লাহ — আমি আল্লাহর কাছে ক্ষমা প্রার্থনা করছি।</div>
-</div>
-
-<!-- ২ -->
-<div class="card">
-  <div class="title"><span class="num">২</span> সালামের পরের দোয়া <span class="count">১ বার</span></div>
-  <div class="arabic">اللَّهُمَّ أَنْتَ السَّلَامُ وَمِنْكَ السَّلَامُ، تَبَارَكْتَ يَا ذَا الْجَلَالِ وَالْإِكْرَامِ</div>
-  <div class="bangla">আল্লাহুম্মা আনতাস সালাম, ওয়া মিনকাস সালাম, তাবারকতা ইয়া যাল জালালি ওয়াল ইকরাম।</div>
-</div>
-
-<!-- ৩ -->
-<div class="card">
-  <div class="title"><span class="num">৩</span> আয়াতুল কুরসি <span class="count">১ বার</span></div>
-  <div class="arabic">
-    <span class="bismillah">بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
-    اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ ۚ لَهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ ۗ مَنْ ذَا الَّذِي يَشْفَعُ عِنْدَهُ إِلَّا بِإِذْنِهِ ۚ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ ۖ وَلَا يُحِيطُونَ بِشَيْءٍ مِنْ عِلْمِهِ إِلَّا بِمَا شَاءَ ۚ وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ ۖ وَلَا يَئُودُهُ حِفْظُهُمَا ۚ وَهُوَ الْعَلِيُّ الْعَظِيمُ
+<!-- ============ টপবার ============ -->
+<div class="topbar">
+  <div class="logo">🌙</div>
+  <div class="titles">
+    <h1 id="pageTitle">সকাল-সন্ধ্যা আমল</h1>
+    <div class="sub" id="pageSub">আরবি • উচ্চারণ • অর্থ</div>
   </div>
-  <div class="bangla">বিসমিল্লাহির রাহমানির রাহিম — আল্লাহু লা ইলাহা ইল্লা হুয়াল হাইয়্যুল কাইয়্যুম… (আয়াতুল কুরসি)</div>
+  <button class="icon-btn" id="themeBtn" aria-label="থিম">🌙</button>
+  <button class="icon-btn" id="settingsBtn" aria-label="সেটিংস">⚙️</button>
 </div>
 
-<!-- ৪ -->
-<div class="card">
-  <div class="title"><span class="num">৪</span> তাসবিহ <span class="count">৩৩ + ৩৩ + ৩৪</span></div>
-  <div class="arabic">سُبْحَانَ اللهِ • الْحَمْدُ لِلَّهِ • اللهُ أَكْبَرُ</div>
-  <div class="bangla">সুবহানাল্লাহ (৩৩), আলহামদুলিল্লাহ (৩৩), আল্লাহু আকবার (৩৪)</div>
-</div>
+<!-- =============================================
+     পেজ ১ : আমল
+============================================== -->
+<div class="page active" id="page-amol">
 
-<!-- ৫ -->
-<div class="card">
-  <div class="title"><span class="num">৫</span> লা ইলাহা ইল্লাল্লাহু ওয়াহদাহু… <span class="count">১০ বার</span></div>
-  <div class="arabic">لَا إِلَٰهَ إِلَّا اللهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ، وَهُوَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ</div>
-  <div class="bangla">লা ইলাহা ইল্লাল্লাহু ওয়াহদাহু লা শারিকা লাহু, লাহুল মুলকু ওয়া লাহুল হামদু, ওয়া হুয়া আলা কুল্লি শাইইন কাদির।</div>
-</div>
-
-<!-- ৬ -->
-<div class="card">
-  <div class="title"><span class="num">৬</span> সূরা ইখলাস <span class="count">৩ বার</span></div>
-  <div class="arabic">
-    <span class="bismillah">بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
-    قُلْ هُوَ اللهُ أَحَدٌ • اللهُ الصَّمَدُ • لَمْ يَلِدْ وَلَمْ يُولَدْ • وَلَمْ يَكُنْ لَهُ كُفُوًا أَحَدٌ
+  <!-- নামাজের সময়সূচি -->
+  <div class="prayer-bar" id="prayerBar">
+    <div class="prayer-item"><div class="name">ফজর</div><div class="time" id="t-fajr">--:--</div></div>
+    <div class="prayer-item"><div class="name">যোহর</div><div class="time" id="t-dhuhr">--:--</div></div>
+    <div class="prayer-item"><div class="name">আসর</div><div class="time" id="t-asr">--:--</div></div>
+    <div class="prayer-item"><div class="name">মাগরিব</div><div class="time" id="t-maghrib">--:--</div></div>
+    <div class="prayer-item"><div class="name">ইশা</div><div class="time" id="t-isha">--:--</div></div>
   </div>
-  <div class="bangla">বিসমিল্লাহির রাহমানির রাহিম — কুল হুয়াল্লাহু আহাদ… (সূরা ইখলাস)</div>
-</div>
-
-<!-- ৭ -->
-<div class="card">
-  <div class="title"><span class="num">৭</span> সূরা ফালাক <span class="count">৩ বার</span></div>
-  <div class="arabic">
-    <span class="bismillah">بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
-    قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ • مِنْ شَرِّ مَا خَلَقَ • وَمِنْ شَرِّ غَاسِقٍ إِذَا وَقَبَ • وَمِنْ شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ • وَمِنْ شَرِّ حَاسِدٍ إِذَا حَسَدَ
+  <div class="next-prayer-info" id="nextPrayerInfo">
+    <span id="nextPrayerName">⏳ নামাজের সময় লোড হচ্ছে...</span>
+    <span class="countdown" id="countdown">--:--:--</span>
   </div>
-  <div class="bangla">বিসমিল্লাহির রাহমানির রাহিম — কুল আউযু বিরাব্বিল ফালাক… (সূরা ফালাক)</div>
-</div>
 
-<!-- ৮ -->
-<div class="card">
-  <div class="title"><span class="num">৮</span> সূরা নাস <span class="count">৩ বার</span></div>
-  <div class="arabic">
-    <span class="bismillah">بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
-    قُلْ أَعُوذُ بِرَبِّ النَّاسِ • مَلِكِ النَّاسِ • إِلَٰهِ النَّاسِ • مِنْ شَرِّ الْوَسْوَاسِ الْخَنَّاسِ • الَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ • مِنَ الْجِنَّةِ وَالنَّاسِ
+  <div class="search-wrap">
+    <input type="text" class="search-box" id="searchInput" placeholder="খুঁজুন... (যেমন: ইস্তেগফার, সূরা)">
   </div>
-  <div class="bangla">বিসমিল্লাহির রাহমানির রাহিম — কুল আউযু বিরাব্বিন নাস… (সূরা নাস)</div>
-</div>
 
-<!-- ৯ -->
-<div class="card">
-  <div class="title"><span class="num">৯</span> আল্লাহুম্মা আইন্নি আলা যিকরিকা… <span class="count">১ বার</span></div>
-  <div class="arabic">اللَّهُمَّ أَعِنِّي عَلَىٰ ذِكْرِكَ وَشُكْرِكَ وَحُسْنِ عِبَادَتِكَ</div>
-  <div class="bangla">আল্লাহুম্মা আইন্নি আলা যিকরিকা ওয়া শুকরিকা ওয়া হুসনি ইবাদাতিক।</div>
-</div>
+  <div id="offlineBar">📴 অফলাইন মোড </div>
 
-<!-- ১০ -->
-<div class="card">
-  <div class="title"><span class="num">১০</span> আল্লাহুম্মা ইন্নি আসআলুকা… <span class="count">১ বার</span></div>
-  <div class="arabic">اللَّهُمَّ إِنِّي أَسْأَلُكَ الْهُدَىٰ وَالتُّقَىٰ وَالْعَفَافَ وَالْغِنَىٰ</div>
-  <div class="bangla">আল্লাহুম্মা ইন্নি আসআলুকাল হুদা ওয়াত তুকা ওয়াল আফাফা ওয়াল গিনা।</div>
-</div>
-
-<!-- ১১ -->
-<div class="card">
-  <div class="title"><span class="num">১১</span> বিসমিল্লাহিল্লাজি লাইয়াদু… <span class="count">৩ বার</span></div>
-  <div class="arabic">بِسْمِ اللهِ الَّذِي لَا يَضُرُّ مَعَ اسْمِهِ شَيْءٌ فِي الْأَرْضِ وَلَا فِي السَّمَاءِ وَهُوَ السَّمِيعُ الْعَلِيمُ</div>
-  <div class="bangla">বিসমিল্লাহিল্লাজি লা ইয়াদুররু মা'আসমিহি শাইউন ফিল আরদি ওয়া লা ফিস সামাই, ওয়া হুয়াস সামিউল আলিম।</div>
-</div>
-
-<!-- ১২ -->
-<div class="card">
-  <div class="title"><span class="num">১২</span> সূরা হাশরের শেষ ৩ আয়াত <span class="count">১ বার</span></div>
-  <div class="arabic">
-    <span class="bismillah">بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
-    هُوَ اللهُ الَّذِي لَا إِلَٰهَ إِلَّا هُوَ ۖ عَالِمُ الْغَيْبِ وَالشَّهَادَةِ ۖ هُوَ الرَّحْمَٰنُ الرَّحِيمُ • هُوَ اللهُ الَّذِي لَا إِلَٰهَ إِلَّا هُوَ الْمَلِكُ الْقُدُّوسُ السَّلَامُ الْمُؤْمِنُ الْمُهَيْمِنُ الْعَزِيزُ الْجَبَّارُ الْمُتَكَبِّرُ ۚ سُبْحَانَ اللهِ عَمَّا يُشْرِكُونَ • هُوَ اللهُ الْخَالِقُ الْبَارِئُ الْمُصَوِّرُ ۖ لَهُ الْأَسْمَاءُ الْحُسْنَىٰ ۚ يُسَبِّحُ لَهُ مَا فِي السَّمَاوَاتِ وَالْأَرْضِ ۖ وَهُوَ الْعَزِيزُ الْحَكِيمُ
+  <div class="stats">
+    <div class="stat"><div class="val" id="statDone">0</div><div class="lbl">সম্পন্ন</div></div>
+    <div class="stat"><div class="val" id="statTotal">21</div><div class="lbl">মোট আমল</div></div>
+    <div class="stat"><div class="val" id="statDate">—</div><div class="lbl">আজ</div></div>
   </div>
-  <div class="bangla">বিসমিল্লাহির রাহমানির রাহিম — হুয়াল্লাহুল্লাজি লা ইলাহা ইল্লা হুয়া… (সূরা হাশরের শেষ ৩ আয়াত)</div>
-</div>
 
-<!-- ১৩ -->
-<div class="card">
-  <div class="title"><span class="num">১৩</span> ওয়াননাযযিলু মিনাল কুরআনি… <span class="count">—</span></div>
-  <div class="arabic">
-    <span class="bismillah">بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
-    وَنُنَزِّلُ مِنَ الْقُرْآنِ مَا هُوَ شِفَاءٌ وَرَحْمَةٌ لِلْمُؤْمِنِينَ
-  </div>
-  <div class="bangla">বিসমিল্লাহির রাহমানির রাহিম — ওয়া নুনাযযিলু মিনাল কুরআনি মা হুয়া শিফাউ ওয়া রাহমাতুল লিল মুমিনিন।</div>
-</div>
-
-<!-- ১৪ -->
-<div class="card">
-  <div class="title"><span class="num">১৪</span> আউযু বিকালিমাতিল্লাহিত তাম্মাতি… <span class="count">—</span></div>
-  <div class="arabic">أَعُوذُ بِكَلِمَاتِ اللهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ</div>
-  <div class="bangla">আউযু বিকালিমাতিল্লাহিত তাম্মাতি মিন শাররি মা খালাক।</div>
-</div>
-
-<!-- ১৫ -->
-<div class="card">
-  <div class="title"><span class="num">১৫</span> আল্লাহুম্মা রাব্বান নাস… <span class="count">—</span></div>
-  <div class="arabic">اللَّهُمَّ رَبَّ النَّاسِ، أَذْهِبِ الْبَأْسَ، اشْفِ أَنْتَ الشَّافِي، لَا شِفَاءَ إِلَّا شِفَاؤُكَ، شِفَاءً لَا يُغَادِرُ سَقَمًا</div>
-  <div class="bangla">আল্লাহুম্মা রাব্বান নাস, আযহিবিল বা'স, ইশফি আনতাশ শাফি, লা শিফাআ ইল্লা শিফাউকা, শিফাআন লা ইউগাদিরু সাকামা।</div>
-  <div class="note">অর্থ: হে আল্লাহ, মানুষের রব! কষ্ট দূর করুন, আরোগ্য দিন — আপনিই আরোগ্যদাতা, আপনার আরোগ্য ছাড়া কোনো আরোগ্য নেই, এমন আরোগ্য দিন যা কোনো রোগই বাকি রাখে না।</div>
-</div>
-
-<!-- ১৬ -->
-<div class="card">
-  <div class="title"><span class="num">১৬</span> সাইয়েদুল ইস্তেগফার <span class="count">১ বার</span></div>
-  <div class="arabic">اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَٰهَ إِلَّا أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ، وَأَنَا عَلَىٰ عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ، أَعُوذُ بِكَ مِنْ شَرِّ مَا صَنَعْتُ، أَبُوءُ لَكَ بِنِعْمَتِكَ عَلَيَّ، وَأَبُوءُ بِذَنْبِي فَاغْفِرْ لِي فَإِنَّهُ لَا يَغْفِرُ الذُّنُوبَ إِلَّا أَنْتَ</div>
-  <div class="bangla">আল্লাহুম্মা আনতা রাব্বি লা ইলাহা ইল্লা আনতা… (সাইয়েদুল ইস্তেগফার)</div>
-</div>
-
-<!-- ১৭ -->
-<div class="card">
-  <div class="title"><span class="num">১৭</span> সুবহানাল্লাহি ওয়া বিহামদিহি <span class="count">১০০ বার</span></div>
-  <div class="arabic">سُبْحَانَ اللهِ وَبِحَمْدِهِ</div>
-  <div class="bangla">সুবহানাল্লাহি ওয়া বিহামদিহি।</div>
-</div>
-
-<!-- ১৮ -->
-<div class="card">
-  <div class="title"><span class="num">১৮</span> ইস্তেগফার <span class="count">১০০ বার</span></div>
-  <div class="arabic">أَسْتَغْفِرُ اللهَ وَأَتُوبُ إِلَيْهِ</div>
-  <div class="bangla">আস্তাগফিরুল্লাহা ওয়া আতুবু ইলাইহি।</div>
-</div>
-
-<!-- ১৯ -->
-<div class="card">
-  <div class="title"><span class="num">১৯</span> সালাতুল ইশরাক <span class="count">২ রাকাত</span></div>
-  <div class="bangla">সূর্য উঠার পর পরই (কমপক্ষে ১৫-২০ মিনিট পর) ২ রাকাত নফল নামাজ।</div>
-  <div class="note">সময়: সূর্যোদয়ের পর থেকে দ্বিপ্রহরের পূর্ব পর্যন্ত।</div>
-</div>
-
-<!-- ২০ -->
-<div class="card">
-  <div class="title"><span class="num">২০</span> নির্দিষ্ট সময়ের সূরা</div>
-
-  <div style="margin-top:10px;">
-    <span class="time-badge fajr">ফজরের পর</span>
-    <strong>সূরা ইয়াসিন</strong>
-    <div class="arabic">
-      <span class="bismillah">بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
-      يس • وَالْقُرْآنِ الْحَكِيمِ • إِنَّكَ لَمِنَ الْمُرْسَلِينَ • عَلَىٰ صِرَاطٍ مُسْتَقِيمٍ
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span>আজকের অগ্রগতি</span>
+      <span id="progressText">0%</span>
     </div>
-    <div class="bangla">বিসমিল্লাহির রাহমানির রাহিম — ইয়া সিন, ওয়াল কুরআনিল হাকিম… (সূরা ইয়াসিন)</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
   </div>
 
-  <div style="margin-top:14px;">
-    <span class="time-badge maghrib">মাগরিবের পর</span>
-    <strong>সূরা ওয়াকিয়া</strong>
-    <div class="arabic">
-      <span class="bismillah">بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
-      إِذَا وَقَعَتِ الْوَاقِعَةُ • لَيْسَ لِوَقْعَتِهَا كَاذِبَةٌ
-    </div>
-    <div class="bangla">বিসমিল্লাহির রাহমানির রাহিম — ইযা ওয়াকাআতিল ওয়াকিআ… (সূরা ওয়াকিয়া)</div>
-  </div>
+  <div class="container" id="container">
+    <div class="section-header">সকালের আমল</div>
 
-  <div style="margin-top:14px;">
-    <span class="time-badge isha">ইশার পর</span>
-    <strong>সূরা মুলক</strong>
-    <div class="arabic">
-      <span class="bismillah">بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
-      تَبَارَكَ الَّذِي بِيَدِهِ الْمُلْكُ وَهُوَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ
+    <div class="card" data-id="0" data-title="আল্লাহু আকবার">
+      <div class="title"><span class="num">০</span> আল্লাহু আকবার <span class="count">১ বার</span></div>
+      <div class="arabic">اللهُ أَكْبَرُ</div>
+      <div class="bangla">আল্লাহু আকবার — আল্লাহ সর্বশ্রেষ্ঠ।</div>
+      <div class="card-actions"><button class="btn primary" onclick="markDone(this,0)">✓ সম্পন্ন</button></div>
     </div>
-    <div class="bangla">বিসমিল্লাহির রাহমানির রাহিম — তাবারাকাল্লাজি বিয়াদিহিল মুলকু ওয়া হুয়া আলা কুল্লি শাইইন কাদির।</div>
+
+    <div class="card" data-id="1" data-title="ইস্তেগফার">
+      <div class="title"><span class="num">১</span> ইস্তেগফার <span class="count">৩ বার</span></div>
+      <div class="arabic">أَسْتَغْفِرُ اللهَ</div>
+      <div class="bangla">আস্তাগফিরুল্লাহ — আমি আল্লাহর কাছে ক্ষমা প্রার্থনা করছি।</div>
+      <div class="counter">
+        <button class="counter-btn minus" onclick="decr(1)">−</button>
+        <div class="counter-val"><span id="cnt-1">0</span><small>/৩</small></div>
+        <button class="counter-btn plus" onclick="incr(1,3)">+</button>
+      </div>
+    </div>
+
+    <div class="card" data-id="2" data-title="সালামের পরের দোয়া">
+      <div class="title"><span class="num">২</span> সালামের পরের দোয়া <span class="count">১ বার</span></div>
+      <div class="arabic">اللَّهُمَّ أَنْتَ السَّلَامُ وَمِنْكَ السَّلَامُ، تَبَارَكْتَ يَا ذَا الْجَلَالِ وَالْإِكْرَامِ</div>
+      <div class="bangla">আল্লাহুম্মা আনতাস সালাম, ওয়া মিনকাস সালাম, তাবারকতা ইয়া যাল জালালি ওয়াল ইকরাম।</div>
+      <div class="card-actions"><button class="btn primary" onclick="markDone(this,2)">✓ সম্পন্ন</button></div>
+    </div>
+
+    <div class="card" data-id="3" data-title="আয়াতুল কুরসি">
+      <div class="title"><span class="num">৩</span> আয়াতুল কুরসি <span class="count">১ বার</span></div>
+      <div class="arabic">
+        <span class="bismillah">بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
+        اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ ۚ لَهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ ۗ مَنْ ذَا الَّذِي يَشْفَعُ عِنْدَهُ إِلَّا بِإِذْنِهِ ۚ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ ۖ وَلَا يُحِيطُونَ بِشَيْءٍ مِنْ عِلْمِهِ إِلَّا بِمَا شَاءَ ۚ وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ ۖ وَلَا يَئُودُهُ حِفْظُهُمَا ۚ وَهُوَ الْعَلِيُّ الْعَظِيمُ
+      </div>
+      <div class="bangla">বিসমিল্লাহির রাহমানির রাহিম — আল্লাহু লা ইলাহা ইল্লা হুয়াল হাইয়্যুল কাইয়্যুম…</div>
+      <div class="card-actions"><button class="btn primary" onclick="markDone(this,3)">✓ সম্পন্ন</button></div>
+    </div>
+
+    <div class="card" data-id="4" data-title="তাসবিহ">
+      <div class="title"><span class="num">৪</span> তাসবিহ <span class="count">৩৩ + ৩৩ + ৩৪</span></div>
+      <div class="arabic">سُبْحَانَ اللهِ • الْحَمْدُ لِلَّهِ • اللهُ أَكْبَرُ</div>
+      <div class="bangla">সুবহানাল্লাহ (৩৩), আলহামদুলিল্লাহ (৩৩), আল্লাহু আকবার (৩৪)</div>
+      <div class="counter">
+        <button class="counter-btn minus" onclick="decr(4)">−</button>
+        <div class="counter-val"><span id="cnt-4">0</span><small>/১০০</small></div>
+        <button class="counter-btn plus" onclick="incr(4,100)">+</button>
+      </div>
+    </div>
+
+    <div class="card" data-id="5" data-title="লা ইলাহা ইল্লাল্লাহু ওয়াহদাহু">
+      <div class="title"><span class="num">৫</span> লা ইলাহা ইল্লাল্লাহু… <span class="count">১০ বার</span></div>
+      <div class="arabic">لَا إِلَٰهَ إِلَّا اللهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ، وَهُوَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ</div>
+      <div class="bangla">লা ইলাহা ইল্লাল্লাহু ওয়াহদাহু লা শারিকা লাহু…</div>
+      <div class="counter">
+        <button class="counter-btn minus" onclick="decr(5)">−</button>
+        <div class="counter-val"><span id="cnt-5">0</span><small>/১০</small></div>
+        <button class="counter-btn plus" onclick="incr(5,10)">+</button>
+      </div>
+    </div>
+
+    <div class="card" data-id="6" data-title="সূরা ইখলাস">
+      <div class="title"><span class="num">৬</span> সূরা ইখলাস <span class="count">৩ বার</span></div>
+      <div class="arabic">
+        <span class="bismillah">بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
+        قُلْ هُوَ اللهُ أَحَدٌ • اللهُ الصَّمَدُ • لَمْ يَلِدْ وَلَمْ يُولَدْ • وَلَمْ يَكُنْ لَهُ كُفُوًا أَحَدٌ
+      </div>
+      <div class="bangla">বিসমিল্লাহির রাহমানির রাহিম — কুল হুয়াল্লাহু আহাদ…</div>
+      <div class="counter">
+        <button class="counter-btn minus" onclick="decr(6)">−</button>
+        <div class="counter-val"><span id="cnt-6">0</span><small>/৩</small></div>
+        <button class="counter-btn plus" onclick="incr(6,3)">+</button>
+      </div>
+    </div>
+
+    <div class="card" data-id="7" data-title="সূরা ফালাক">
+      <div class="title"><span class="num">৭</span> সূরা ফালাক <span class="count">৩ বার</span></div>
+      <div class="arabic">
+        <span class="bismillah">بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
+        قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ • مِنْ شَرِّ مَا خَلَقَ • وَمِنْ شَرِّ غَاسِقٍ إِذَا وَقَبَ • وَمِنْ شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ • وَمِنْ شَرِّ حَاسِدٍ إِذَا حَسَدَ
+      </div>
+      <div class="bangla">বিসমিল্লাহির রাহমানির রাহিম — কুল আউযু বিরাব্বিল ফালাক…</div>
+      <div class="counter">
+        <button class="counter-btn minus" onclick="decr(7)">−</button>
+        <div class="counter-val"><span id="cnt-7">0</span><small>/৩</small></div>
+        <button class="counter-btn plus" onclick="incr(7,3)">+</button>
+      </div>
+    </div>
+
+    <div class="card" data-id="8" data-title="সূরা নাস">
+      <div class="title"><span class="num">৮</span> সূরা নাস <span class="count">৩ বার</span></div>
+      <div class="arabic">
+        <span class="bismillah">بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
+        قُلْ أَعُوذُ بِرَبِّ النَّاسِ • مَلِكِ النَّاسِ • إِلَٰهِ النَّاسِ • مِنْ شَرِّ الْوَسْوَاسِ الْخَنَّاسِ • الَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ • مِنَ الْجِنَّةِ وَالنَّاسِ
+      </div>
+      <div class="bangla">বিসমিল্লাহির রাহমানির রাহিম — কুল আউযু বিরাব্বিন নাস…</div>
+      <div class="counter">
+        <button class="counter-btn minus" onclick="decr(8)">−</button>
+        <div class="counter-val"><span id="cnt-8">0</span><small>/৩</small></div>
+        <button class="counter-btn plus" onclick="incr(8,3)">+</button>
+      </div>
+    </div>
+
+    <div class="section-header">দোয়া ও যিকির</div>
+
+    <div class="card" data-id="9" data-title="আল্লাহুম্মা আইন্নি আলা যিকরিকা">
+      <div class="title"><span class="num">৯</span> আল্লাহুম্মা আইন্নি… <span class="count">১ বার</span></div>
+      <div class="arabic">اللَّهُمَّ أَعِنِّي عَلَىٰ ذِكْرِكَ وَشُكْرِكَ وَحُسْنِ عِبَادَتِكَ</div>
+      <div class="bangla">আল্লাহুম্মা আইন্নি আলা যিকরিকা ওয়া শুকরিকা ওয়া হুসনি ইবাদাতিক।</div>
+      <div class="card-actions"><button class="btn primary" onclick="markDone(this,9)">✓ সম্পন্ন</button></div>
+    </div>
+
+    <div class="card" data-id="10" data-title="আল্লাহুম্মা ইন্নি আসআলুকা">
+      <div class="title"><span class="num">১০</span> আল্লাহুম্মা ইন্নি আসআলুকা… <span class="count">১ বার</span></div>
+      <div class="arabic">اللَّهُمَّ إِنِّي أَسْأَلُكَ الْهُدَىٰ وَالتُّقَىٰ وَالْعَفَافَ وَالْغِنَىٰ</div>
+      <div class="bangla">আল্লাহুম্মা ইন্নি আসআলুকাল হুদা ওয়াত তুকা ওয়াল আফাফা ওয়াল গিনা।</div>
+      <div class="card-actions"><button class="btn primary" onclick="markDone(this,10)">✓ সম্পন্ন</button></div>
+    </div>
+
+    <div class="card" data-id="11" data-title="বিসমিল্লাহিল্লাজি লাইয়াদু">
+      <div class="title"><span class="num">১১</span> বিসমিল্লাহিল্লাজি… <span class="count">৩ বার</span></div>
+      <div class="arabic">بِسْمِ اللهِ الَّذِي لَا يَضُرُّ مَعَ اسْمِهِ شَيْءٌ فِي الْأَرْضِ وَلَا فِي السَّمَاءِ وَهُوَ السَّمِيعُ الْعَلِيمُ</div>
+      <div class="bangla">বিসমিল্লাহিল্লাজি লা ইয়াদুররু মা'আসমিহি শাইউন…</div>
+      <div class="counter">
+        <button class="counter-btn minus" onclick="decr(11)">−</button>
+        <div class="counter-val"><span id="cnt-11">0</span><small>/৩</small></div>
+        <button class="counter-btn plus" onclick="incr(11,3)">+</button>
+      </div>
+    </div>
+
+    <div class="card" data-id="12" data-title="সূরা হাশরের শেষ ৩ আয়াত">
+      <div class="title"><span class="num">১২</span> সূরা হাশরের শেষ ৩ আয়াত <span class="count">১ বার</span></div>
+      <div class="arabic">
+        <span class="bismillah">بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
+        هُوَ اللهُ الَّذِي لَا إِلَٰهَ إِلَّا هُوَ ۖ عَالِمُ الْغَيْبِ وَالشَّهَادَةِ ۖ هُوَ الرَّحْمَٰنُ الرَّحِيمُ • هُوَ اللهُ الَّذِي لَا إِلَٰهَ إِلَّا هُوَ الْمَلِكُ الْقُدُّوسُ السَّلَامُ الْمُؤْمِنُ الْمُهَيْمِنُ الْعَزِيزُ الْجَبَّارُ الْمُتَكَبِّرُ ۚ سُبْحَانَ اللهِ عَمَّا يُشْرِكُونَ • هُوَ اللهُ الْخَالِقُ الْبَارِئُ الْمُصَوِّرُ ۖ لَهُ الْأَسْمَاءُ الْحُسْنَىٰ ۚ يُسَبِّحُ لَهُ مَا فِي السَّمَاوَاتِ وَالْأَرْضِ ۖ وَهُوَ الْعَزِيزُ الْحَكِيمُ
+      </div>
+      <div class="bangla">বিসমিল্লাহির রাহমানির রাহিম — হুয়াল্লাহুল্লাজি লা ইলাহা ইল্লা হুয়া…</div>
+      <div class="card-actions"><button class="btn primary" onclick="markDone(this,12)">✓ সম্পন্ন</button></div>
+    </div>
+
+    <div class="card" data-id="13" data-title="ওয়াননাযযিলু মিনাল কুরআনি">
+      <div class="title"><span class="num">১৩</span> ওয়াননাযযিলু… <span class="count">—</span></div>
+      <div class="arabic">
+        <span class="bismillah">بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
+       وَنُنَزِّلُ مِنَ الْقُرْآنِ مَا هُوَ شِفَاءٌ وَرَحْمَةٌ لِلْمُؤْمِنِينَ
+      </div>
+      <div class="bangla">বিসমিল্লাহির রাহমানির রাহিম — ওয়া নুনাযযিলু মিনাল কুরআনি…</div>
+    </div>
+
+    <div class="card" data-id="14" data-title="আউযু বিকালিমাতিল্লাহিত তাম্মাতি">
+      <div class="title"><span class="num">১৪</span> আউযু বিকালিমাতিল্লাহ… <span class="count">—</span></div>
+      <div class="arabic">أَعُوذُ بِكَلِمَاتِ اللهِ التَّامَّةِ، مِنْ كُلِّ شَيْطَانٍ وَهَامَّةٍ، وَمِنْ كُلِّ عَيْنٍ لَامَّةٍ/أَعُوذُ بِكَلِمَاتِ اللهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ</div>
+      <div class="bangla">আউযু বিকালিমাতিল্লাহিত তাম্মাতি মিন শাররি মা খালাক।</div>
+    </div>
+
+    <div class="card" data-id="15" data-title="আল্লাহুম্মা রাব্বান নাস">
+      <div class="title"><span class="num">১৫</span> আল্লাহুম্মা রাব্বান নাস… <span class="count">—</span></div>
+      <div class="arabic">اللَّهُمَّ رَبَّ النَّاسِ، أَذْهِبِ الْبَأْسَ، اشْفِ أَنْتَ الشَّافِي، لَا شِفَاءَ إِلَّا شِفَاؤُكَ، شِفَاءً لَا يُغَادِرُ سَقَمًا</div>
+      <div class="bangla">আল্লাহুম্মা রাব্বান নাস, আযহিবিল বা'স, ইশফি আনতাশ শাফি…</div>
+      <div class="note">অর্থ: হে আল্লাহ, মানুষের রব! কষ্ট দূর করুন, আরোগ্য দিন।</div>
+    </div>
+
+    <div class="card" data-id="16" data-title="সাইয়েদুল ইস্তেগফার">
+      <div class="title"><span class="num">১৬</span> সাইয়েদুল ইস্তেগফার <span class="count">১ বার</span></div>
+      <div class="arabic">اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَٰهَ إِلَّا أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ، وَأَنَا عَلَىٰ عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ، أَعُوذُ بِكَ مِنْ شَرِّ مَا صَنَعْتُ، أَبُوءُ لَكَ بِنِعْمَتِكَ عَلَيَّ، وَأَبُوءُ بِذَنْبِي فَاغْفِرْ لِي فَإِنَّهُ لَا يَغْفِرُ الذُّنُوبَ إِلَّا أَنْتَ</div>
+      <div class="bangla">আল্লাহুম্মা আনতা রাব্বি লা ইলাহা ইল্লা আনতা…</div>
+      <div class="card-actions"><button class="btn primary" onclick="markDone(this,16)">✓ সম্পন্ন</button></div>
+    </div>
+
+    <div class="card" data-id="17" data-title="সুবহানাল্লাহি ওয়া বিহামদিহি">
+      <div class="title"><span class="num">১৭</span> সুবহানাল্লাহি ওয়া বিহামদিহি <span class="count">১০০ বার</span></div>
+      <div class="arabic">سُبْحَانَ اللَّهِ وَبِحَمْدِهِ سُبْحَانَ اللَّه الْعَظِيم</div>
+      <div class="bangla">সুবহানাল্লাহি ওয়া বিহামদিহি।</div>
+      <div class="counter">
+        <button class="counter-btn minus" onclick="decr(17)">−</button>
+        <div class="counter-val"><span id="cnt-17">0</span><small>/১০০</small></div>
+        <button class="counter-btn plus" onclick="incr(17,100)">+</button>
+      </div>
+    </div>
+
+    <div class="card" data-id="18" data-title="ইস্তেগফার ১০০ বার">
+      <div class="title"><span class="num">১৮</span> ইস্তেগফার <span class="count">১০০ বার</span></div>
+      <div class="arabic">أَسْتَغْفِرُ اللهَ وَأَتُوبُ إِلَيْهِ</div>
+      <div class="bangla">আস্তাগফিরুল্লাহা ওয়া আতুবু ইলাইহি।</div>
+      <div class="counter">
+        <button class="counter-btn minus" onclick="decr(18)">−</button>
+        <div class="counter-val"><span id="cnt-18">0</span><small>/১০০</small></div>
+        <button class="counter-btn plus" onclick="incr(18,100)">+</button>
+      </div>
+    </div>
+
+    <div class="section-header">নামাজ ও বিশেষ সূরা</div>
+
+    <div class="card" data-id="19" data-title="সালাতুল ইশরাক">
+      <div class="title"><span class="num">১৯</span> সালাতুল ইশরাক <span class="count">২ রাকাত</span></div>
+      <div class="bangla">সূর্য উঠার পর ২ রাকাত নফল নামাজ।</div>
+      <div class="note">সময়: সূর্যোদয়ের পর থেকে দ্বিপ্রহরের পূর্ব পর্যন্ত।</div>
+      <div class="card-actions"><button class="btn primary" onclick="markDone(this,19)">✓ সম্পন্ন</button></div>
+    </div>
+
+    <div class="card" data-id="20" data-title="নির্দিষ্ট সময়ের সূরা">
+      <div class="title"><span class="num">২০</span> নির্দিষ্ট সময়ের সূরা</div>
+      <div class="time-section">
+        <span class="time-badge fajr">ফজরের পর</span>
+        <strong style="margin-right:6px;">সূরা ইয়াসিন</strong>
+        <div class="arabic"><span class="bismillah">بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ</span>يس • وَالْقُرْآنِ الْحَكِيمِ • إِنَّكَ لَمِنَ الْمُرْسَلِينَ • عَلَىٰ صِرَاطٍ مُسْتَقِيمٍ</div>
+        <div class="bangla">বিসমিল্লাহির রাহমানির রাহিম — ইয়া সিন…</div>
+      </div>
+      <div class="time-section">
+        <span class="time-badge maghrib">মাগরিবের পর</span>
+        <strong style="margin-right:6px;">সূরা ওয়াকিয়া</strong>
+        <div class="arabic"><span class="bismillah">بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ</span>إِذَا وَقَعَتِ الْوَاقِعَةُ • لَيْسَ لِوَقْعَتِهَا كَاذِبَةٌ</div>
+        <div class="bangla">বিসমিল্লাহির রাহমানির রাহিম — ইযা ওয়াকাআতিল ওয়াকিআ…</div>
+      </div>
+      <div class="time-section">
+        <span class="time-badge isha">ইশার পর</span>
+        <strong style="margin-right:6px;">সূরা মুলক</strong>
+        <div class="arabic"><span class="bismillah">بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ</span>تَبَارَكَ الَّذِي بِيَدِهِ الْمُلْكُ وَهُوَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ</div>
+        <div class="bangla">বিসমিল্লাহির রাহমানির রাহিম — তাবারাকাল্লাজি…</div>
+      </div>
+      <div class="card-actions"><button class="btn primary" onclick="markDone(this,20)">✓ সম্পন্ন</button></div>
+    </div>
+
+    <div class="empty" id="emptyState" style="display:none;">
+      <div class="ico">🔍</div>
+      <div>কিছু পাওয়া যায়নি</div>
+    </div>
   </div>
 </div>
 
-<footer>
-  প্রতিদিন সকাল ও সন্ধ্যায় আমল করুন — ইনশাআল্লাহ উপকার পাবেন।
-</footer>
+<!-- =============================================
+     পেজ ২ : তাসবিহ কাউন্টার
+============================================== -->
+<div class="page" id="page-tasbih">
+  <div class="tasbih-big">
+    <div class="tasbih-count" id="tasbihCount">0</div>
+    <div class="tasbih-target">লক্ষ্য: <span id="tasbihTarget">৩৩</span></div>
+
+    <button class="tasbih-main-btn" id="tasbihBtn" onclick="tasbihIncr()">
+      জিকির
+      <small>ট্যাপ করুন</small>
+    </button>
+
+    <div class="tasbih-targets">
+      <div class="target-chip active" onclick="setTarget(33,this)">৩৩</div>
+      <div class="target-chip" onclick="setTarget(100,this)">১০০</div>
+      <div class="target-chip" onclick="setTarget(1000,this)">১০০০</div>
+      <div class="target-chip" onclick="setTarget(9999,this)">∞</div>
+    </div>
+
+    <div class="tasbih-actions">
+      <button class="btn" onclick="tasbihDecr()">−১</button>
+      <button class="btn red" onclick="tasbihReset()">🔄 রিসেট</button>
+    </div>
+
+    <div style="margin-top:24px; font-size:0.85rem; color:var(--text-dim); text-align:center;">
+      সেশন কাউন্ট: <strong id="tasbihSession" style="color:var(--gold);">0</strong>
+    </div>
+  </div>
+</div>
+
+<!-- =============================================
+     পেজ ৩ : দোয়া সমূহ
+============================================== -->
+<div class="page" id="page-dua">
+  <div class="dua-cat" id="duaCat">
+    <div class="cat-chip active" data-cat="all">সব</div>
+    <div class="cat-chip" data-cat="ghum">ঘুম</div>
+    <div class="cat-chip" data-cat="utha">ঘুম থেকে</div>
+    <div class="cat-chip" data-cat="khaowa">খাওয়া</div>
+    <div class="cat-chip" data-cat="bathroom">টয়লেট</div>
+    <div class="cat-chip" data-cat="safar">ভ্রমণ</div>
+    <div class="cat-chip" data-cat="bipod">বিপদ</div>
+    <div class="cat-chip" data-cat="jnan">জ্ঞান</div>
+  </div>
+
+  <div class="container" id="duaContainer">
+    <!-- দোয়াগুলো JS দিয়ে populate হবে -->
+  </div>
+</div>
 
 <button id="topBtn" aria-label="উপরে যান">↑</button>
+<div id="toast"></div>
+
+<!-- ============ বটম নেভিগেশন ============ -->
+<div class="bottombar">
+  <button class="nav-btn active" data-page="amol">
+    <span class="ico">📖</span><span>আমল</span>
+  </button>
+  <button class="nav-btn" data-page="tasbih">
+    <span class="ico">📿</span><span>তাসবিহ</span>
+  </button>
+  <button class="nav-btn" data-page="dua">
+    <span class="ico">🤲</span><span>দোয়া</span>
+  </button>
+  <button class="nav-btn" onclick="openPanel()">
+    <span class="ico">⚙️</span><span>সেটিংস</span>
+  </button>
+</div>
+
+<!-- ============ সেটিংস প্যানেল ============ -->
+<div class="panel" id="panel" onclick="if(event.target===this) closePanel()">
+  <div class="panel-content">
+    <h2>⚙️ সেটিংস <button class="icon-btn" onclick="closePanel()">✕</button></h2>
+
+    <div class="setting-row">
+      <div><label>🌙 ডার্ক মোড</label><span class="hint">রাতের জন্য আরামদায়ক</span></div>
+      <div class="switch" id="themeSwitch" onclick="toggleTheme()"></div>
+    </div>
+
+    <div class="setting-row">
+      <div><label>🔔 ভাইব্রেশন</label><span class="hint">বাটনে চাপলে কম্পন</span></div>
+      <div class="switch on" id="vibeSwitch" onclick="toggleVibe()"></div>
+    </div>
+
+    <div class="setting-row">
+      <div><label>📊 অগ্রগতি সেভ</label><span class="hint">আজকের আমল সেভ থাকে</span></div>
+      <div class="switch on" id="saveSwitch" onclick="toggleSave()"></div>
+    </div>
+
+    <div class="setting-row">
+      <div><label>🔔 নামাজের রিমাইন্ডার</label><span class="hint">প্রতিটি নামাজের সময় নোটিফিকেশন</span></div>
+      <div class="switch" id="notifSwitch" onclick="toggleNotif()"></div>
+    </div>
+
+    <div class="setting-row">
+      <div><label>📍 অবস্থান সেট</label><span class="hint" id="locHint">আপনার শহরের নাম লিখুন</span></div>
+      <button class="btn gold" style="flex:0; padding:8px 16px;" onclick="setLocation()">সেট</button>
+    </div>
+
+    <div class="setting-row" onclick="resetDay(true)" style="cursor:pointer;">
+      <div><label>🔄 আজকের অগ্রগতি রিসেট</label><span class="hint">সব কাউন্টার শূন্য হবে</span></div>
+      <span style="font-size:20px;">›</span>
+    </div>
+
+    <div style="margin-top:20px; text-align:center; font-size:0.8rem; color:var(--text-dim);">
+      সকাল-সন্ধ্যা আমল • v3.0<br>
+      আল্লাহ আমাদের সবাইকে কবুল করুন 🤲
+    </div>
+  </div>
+</div>
 
 <script>
-  // ===== Service Worker রেজিস্ট্রেশন =====
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js')
-        .then(reg => console.log('✅ SW registered:', reg.scope))
-        .catch(err => console.log('❌ SW failed:', err));
+/* ============================================================
+   স্টেট
+============================================================ */
+const STORAGE_KEY = 'sokal_sondha_data_v3';
+const SETTINGS_KEY = 'sokal_sondha_settings_v3';
+const LOCATION_KEY = 'sokal_sondha_location_v3';
+const NOTIF_KEY = 'sokal_sondha_notif_v3';
+
+let state = { counts:{}, done:{}, date:todayStr() };
+let settings = { theme:'dark', vibe:true, save:true };
+let userLoc = null; // { lat, lng, city }
+let notifTimes = {};
+let notifEnabled = false;
+
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+}
+
+/* ============================================================
+   লোড/সেভ
+============================================================ */
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (data.date === todayStr()) state = Object.assign(state, data);
+      else state = { counts:{}, done:{}, date:todayStr() };
+    }
+  } catch(e){}
+
+  try {
+    const s = localStorage.getItem(SETTINGS_KEY);
+    if (s) settings = Object.assign(settings, JSON.parse(s));
+  } catch(e){}
+
+  try {
+    const l = localStorage.getItem(LOCATION_KEY);
+    if (l) userLoc = JSON.parse(l);
+  } catch(e){}
+
+  try {
+    const n = localStorage.getItem(NOTIF_KEY);
+    if (n) {
+      const d = JSON.parse(n);
+      notifEnabled = d.enabled || false;
+      notifTimes = d.times || {};
+    }
+  } catch(e){}
+}
+function saveState() { if(!settings.save) return; try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
+function saveSettings(){ try{ localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }catch(e){} }
+function saveNotif(){ try{ localStorage.setItem(NOTIF_KEY, JSON.stringify({enabled:notifEnabled, times:notifTimes})); }catch(e){} }
+
+/* ============================================================
+   কাউন্টার (আমল)
+============================================================ */
+function incr(id, max) {
+  vibrate();
+  const cur = state.counts[id] || 0;
+  if (cur >= max) { showToast('✅ সম্পন্ন হয়েছে!'); return; }
+  state.counts[id] = cur + 1;
+  document.getElementById('cnt-'+id).textContent = state.counts[id];
+  if (state.counts[id] >= max) {
+    markDoneByCounter(id);
+    showToast('🎉 সম্পন্ন!');
+  }
+  saveState(); updateProgress();
+}
+function decr(id) {
+  vibrate();
+  const cur = state.counts[id] || 0;
+  if (cur <= 0) return;
+  state.counts[id] = cur - 1;
+  document.getElementById('cnt-'+id).textContent = state.counts[id];
+  saveState(); updateProgress();
+}
+function markDoneByCounter(id) {
+  const card = document.querySelector('[data-id="'+id+'"]');
+  if (card) card.classList.add('done');
+  state.done[id] = true;
+}
+function markDone(btn, id) {
+  vibrate();
+  const card = btn.closest('.card');
+  const isDone = card.classList.toggle('done');
+  if (isDone) {
+    btn.classList.add('done');
+    state.done[id] = true;
+    showToast('✅ সম্পন্ন হয়েছে');
+  } else {
+    btn.classList.remove('done');
+    delete state.done[id];
+  }
+  saveState(); updateProgress();
+}
+
+/* ============================================================
+   প্রগ্রেস
+============================================================ */
+const TOTAL_ITEMS = 21;
+function updateProgress() {
+  const doneCount = Object.keys(state.done).filter(k=>state.done[k]).length;
+  const pct = Math.round((doneCount/TOTAL_ITEMS)*100);
+  document.getElementById('progressFill').style.width = pct+'%';
+  document.getElementById('progressText').textContent = pct+'%';
+  document.getElementById('statDone').textContent = doneCount;
+  document.getElementById('statTotal').textContent = TOTAL_ITEMS;
+  const d = new Date();
+  const bnMonths=['জানু','ফেব্রু','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগ','সেপ্ট','অক্টো','নভে','ডিসে'];
+  document.getElementById('statDate').textContent = d.getDate()+' '+bnMonths[d.getMonth()];
+}
+
+/* ============================================================
+   সার্চ
+============================================================ */
+const searchInput = document.getElementById('searchInput');
+searchInput.addEventListener('input', function() {
+  const q = this.value.trim().toLowerCase();
+  const cards = document.querySelectorAll('#container .card');
+  let visible = 0;
+  cards.forEach(card => {
+    const title = (card.dataset.title||'').toLowerCase();
+    const arabic = (card.querySelector('.arabic')?.textContent||'').toLowerCase();
+    const bangla = (card.querySelector('.bangla')?.textContent||'').toLowerCase();
+    const match = !q || title.includes(q) || arabic.includes(q) || bangla.includes(q);
+    card.style.display = match ? '' : 'none';
+    if (match) visible++;
+  });
+  document.getElementById('emptyState').style.display = visible===0 ? 'block' : 'none';
+});
+
+/* ============================================================
+   টপ বাটন
+============================================================ */
+const topBtn = document.getElementById('topBtn');
+window.addEventListener('scroll', () => {
+  topBtn.classList.toggle('show', window.scrollY > 400);
+}, { passive:true });
+topBtn.addEventListener('click', () => window.scrollTo({top:0,behavior:'smooth'}));
+
+/* ============================================================
+   থিম
+============================================================ */
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', settings.theme);
+  document.getElementById('themeBtn').textContent = settings.theme==='dark'?'☀️':'🌙';
+  document.getElementById('themeSwitch').classList.toggle('on', settings.theme==='dark');
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', settings.theme==='dark'?'#0b3d2e':'#f4f9f4');
+}
+function toggleTheme() {
+  vibrate();
+  settings.theme = settings.theme==='dark'?'light':'dark';
+  applyTheme(); saveSettings();
+}
+document.getElementById('themeBtn').addEventListener('click', toggleTheme);
+
+/* ============================================================
+   ভাইব্রেশন
+============================================================ */
+function vibrate() {
+  if (settings.vibe && navigator.vibrate) navigator.vibrate(15);
+}
+function toggleVibe() {
+  settings.vibe = !settings.vibe;
+  document.getElementById('vibeSwitch').classList.toggle('on', settings.vibe);
+  saveSettings(); if (settings.vibe) vibrate();
+}
+
+/* ============================================================
+   সেভ
+============================================================ */
+function toggleSave() {
+  settings.save = !settings.save;
+  document.getElementById('saveSwitch').classList.toggle('on', settings.save);
+  saveSettings(); if (settings.save) saveState();
+}
+
+/* ============================================================
+   নোটিফিকেশন
+============================================================ */
+async function toggleNotif() {
+  vibrate();
+  if (!notifEnabled) {
+    if (!('Notification' in window)) { showToast('❌ এই ব্রাউজারে নোটিফিকেশন সাপোর্ট নেই'); return; }
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') { showToast('❌ অনুমতি দেওয়া হয়নি'); return; }
+    notifEnabled = true;
+    document.getElementById('notifSwitch').classList.add('on');
+    showToast('✅ নোটিফিকেশন চালু');
+    scheduleAllNotifications();
+  } else {
+    notifEnabled = false;
+    document.getElementById('notifSwitch').classList.remove('on');
+    clearAllNotifications();
+    showToast('🔕 নোটিফিকেশন বন্ধ');
+  }
+  saveNotif();
+}
+
+let notifTimers = [];
+function clearAllNotifications() {
+  notifTimers.forEach(t => clearTimeout(t));
+  notifTimers = [];
+}
+
+function scheduleAllNotifications() {
+  clearAllNotifications();
+  if (!notifEnabled) return;
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const prayers = [
+    { name:'ফজর', time: notifTimes.fajr },
+    { name:'যোহর', time: notifTimes.dhuhr },
+    { name:'আসর', time: notifTimes.asr },
+    { name:'মাগরিব', time: notifTimes.maghrib },
+    { name:'ইশা', time: notifTimes.isha }
+  ];
+
+  prayers.forEach(p => {
+    if (!p.time) return;
+    const [h,m] = p.time.split(':').map(Number);
+    const target = new Date(today);
+    target.setHours(h, m, 0, 0);
+    let diff = target.getTime() - now.getTime();
+    if (diff < 0) diff += 24*60*60*1000; // আগামীকাল
+
+    // 24 ঘণ্টার বেশি হলে টাইমার সেট হবে না, তবে সেশন চলাকালে ঠিক আছে
+    if (diff < 24*60*60*1000) {
+      const t = setTimeout(() => {
+        showBrowserNotification(p.name+' এর সময় হয়েছে', p.name+' নামাজের সময় হয়েছে। 🕌');
+        // পরের দিনের জন্য আবার সেট
+        setTimeout(scheduleAllNotifications, 60000);
+      }, diff);
+      notifTimers.push(t);
+    }
+  });
+}
+
+function showBrowserNotification(title, body) {
+  if (!('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
+  try {
+    new Notification(title, {
+      body: body,
+      icon: 'icon-512.png',
+      badge: 'icon-512.png',
+      tag: 'prayer-notif'
     });
-  }
+  } catch(e) { console.log(e); }
+}
 
-  // ===== অফলাইন/অনলাইন ডিটেকশন =====
-  const offlineBar = document.getElementById('offlineBar');
-  function updateStatus() {
-    if (!navigator.onLine) offlineBar.classList.add('show');
-    else offlineBar.classList.remove('show');
-  }
-  window.addEventListener('online', updateStatus);
-  window.addEventListener('offline', updateStatus);
-  updateStatus();
+/* ============================================================
+   অবস্থান
+============================================================ */
+function setLocation() {
+  const cur = userLoc ? userLoc.city : '';
+  const city = prompt('আপনার শহরের নাম লিখুন:', cur || 'ঢাকা');
+  if (!city) return;
+  // Nominatim API দিয়ে lat/lng বের করি (অফলাইনে ব্যর্থ হবে, কিন্তু নাম সেভ থাকবে)
+  showToast('📍 খোঁজা হচ্ছে...');
+  fetch('https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(city)+'&limit=1')
+    .then(r => r.json())
+    .then(data => {
+      if (data && data.length > 0) {
+        userLoc = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon), city: city };
+      } else {
+        userLoc = { lat:23.8103, lng:90.4125, city: city };
+      }
+      localStorage.setItem(LOCATION_KEY, JSON.stringify(userLoc));
+      document.getElementById('locHint').textContent = city;
+      fetchPrayerTimes();
+      showToast('✅ '+city+' সেট হয়েছে');
+    })
+    .catch(() => {
+      userLoc = { lat:23.8103, lng:90.4125, city: city };
+      localStorage.setItem(LOCATION_KEY, JSON.stringify(userLoc));
+      document.getElementById('locHint').textContent = city;
+      fetchPrayerTimes();
+      showToast('📍 '+city+' সেভ হয়েছে (অফলাইন)');
+    });
+}
 
-  // ===== উপরে যাওয়ার বাটন =====
-  const topBtn = document.getElementById('topBtn');
-  window.addEventListener('scroll', () => {
-    if (window.scrollY > 300) topBtn.classList.add('show');
-    else topBtn.classList.remove('show');
-  }, { passive: true });
-  topBtn.addEventListener('click', () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+async function fetchPrayerTimes() {
+  if (!userLoc) {
+    // ডিফল্ট ঢাকা
+    userLoc = { lat:23.8103, lng:90.4125, city:'ঢাকা' };
+    document.getElementById('locHint').textContent = 'ঢাকা (ডিফল্ট)';
+  }
+  const today = new Date();
+  const ds = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+
+  try {
+    const url = 'https://api.aladhan.com/v1/timings/'+ds+'?latitude='+userLoc.lat+'&longitude='+userLoc.lng+'&method=1';
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data && data.data && data.data.timings) {
+      const t = data.data.timings;
+      const times = {
+        fajr: cleanTime(t.Fajr),
+        dhuhr: cleanTime(t.Dhuhr),
+        asr: cleanTime(t.Asr),
+        maghrib: cleanTime(t.Maghrib),
+        isha: cleanTime(t.Isha)
+      };
+      applyPrayerTimes(times);
+      // সেভ করে রাখি অফলাইনের জন্য
+      try {
+        localStorage.setItem('prayerTimes_'+ds, JSON.stringify(times));
+      } catch(e){}
+    }
+  } catch(e) {
+    // অফলাইন — ক্যাশ থেকে পড়ি
+    try {
+      const cached = localStorage.getItem('prayerTimes_'+ds);
+      if (cached) {
+        applyPrayerTimes(JSON.parse(cached));
+        return;
+      }
+    } catch(err){}
+    console.log('prayer times fetch failed', e);
+  }
+}
+
+function cleanTime(str) {
+  // "05:12 (BST)" → "05:12"
+  return (str||'').split(' ')[0];
+}
+
+function applyPrayerTimes(times) {
+  ['fajr','dhuhr','asr','maghrib','isha'].forEach(k => {
+    const el = document.getElementById('t-'+k);
+    if (el) el.textContent = toBn(times[k]);
   });
 
-  // ===== PWA ইনস্টল প্রম্পট (ঐচ্ছিক) =====
-  let deferredPrompt = null;
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    // চাইলে এখানে কাস্টম "Install" বাটন দেখাতে পারেন
+  // ১২ ঘণ্টা ফরম্যাটে দেখাই
+  ['fajr','dhuhr','asr','maghrib','isha'].forEach(k => {
+    const el = document.getElementById('t-'+k);
+    if (el) el.textContent = format12(times[k]);
   });
+
+  notifTimes = times;
+  saveNotif();
+  if (notifEnabled) scheduleAllNotifications();
+
+  updateNextPrayer(times);
+}
+
+function toBn(num) {
+  const map = {'0':'০','1':'১','2':'২','3':'৩','4':'৪','5':'৫','6':'৬','7':'৭','8':'৮','9':'৯'};
+  return String(num).replace(/[0-9]/g, d => map[d]);
+}
+
+function format12(t) {
+  if (!t) return '--:--';
+  const [h,m] = t.split(':').map(Number);
+  let hh = h%12; if (hh===0) hh=12;
+  const ampm = h<12 ? 'AM' : 'PM';
+  return toBn(hh)+':'+toBn(String(m).padStart(2,'0'))+' '+ampm;
+}
+
+let nextPrayerInterval = null;
+function updateNextPrayer(times) {
+  if (nextPrayerInterval) clearInterval(nextPrayerInterval);
+
+  function tick() {
+    const now = new Date();
+    const prayers = [
+      { name:'ফজর', time: times.fajr },
+      { name:'যোহর', time: times.dhuhr },
+      { name:'আসর', time: times.asr },
+      { name:'মাগরিব', time: times.maghrib },
+      { name:'ইশা', time: times.isha }
+    ];
+    let next = null;
+    for (const p of prayers) {
+      if (!p.time) continue;
+      const [h,m] = p.time.split(':').map(Number);
+      const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0, 0);
+      if (target > now) { next = { name:p.name, target }; break; }
+    }
+    if (!next) {
+      // আগামীকাল ফজর
+      const [h,m] = times.fajr.split(':').map(Number);
+      const t = new Date(now);
+      t.setDate(t.getDate()+1);
+      t.setHours(h,m,0,0);
+      next = { name:'ফজর (আগামীকাল)', target:t };
+    }
+
+    // কোনটা next সেটা হাইলাইট করি
+    document.querySelectorAll('.prayer-item').forEach(el => el.classList.remove('next'));
+    const idx = ['ফজর','যোহর','আসর','মাগরিব','ইশা'].indexOf(next.name.replace(' (আগামীকাল)',''));
+    if (idx >= 0) {
+      const items = document.querySelectorAll('.prayer-item');
+      if (items[idx]) items[idx].classList.add('next');
+    }
+
+    const diff = next.target - now;
+    const hh = Math.floor(diff/3600000);
+    const mm = Math.floor((diff%3600000)/60000);
+    const ss = Math.floor((diff%60000)/1000);
+
+    document.getElementById('nextPrayerName').innerHTML = '🕌 পরবর্তী: <strong>'+next.name+'</strong>';
+    document.getElementById('countdown').textContent =
+      toBn(String(hh).padStart(2,'0'))+':'+toBn(String(mm).padStart(2,'0'))+':'+toBn(String(ss).padStart(2,'0'));
+  }
+
+  tick();
+  nextPrayerInterval = setInterval(tick, 1000);
+}
+
+/* ============================================================
+   তাসবিহ কাউন্টার
+============================================================ */
+let tasbihState = { count: 0, target: 33, session: 0 };
+const TASBIH_KEY = 'sokal_sondha_tasbih_v3';
+
+function loadTasbih() {
+  try {
+    const raw = localStorage.getItem(TASBIH_KEY);
+    if (raw) {
+      const d = JSON.parse(raw);
+      tasbihState.count = d.count || 0;
+      tasbihState.target = d.target || 33;
+      tasbihState.session = d.session || 0;
+    }
+  } catch(e){}
+  renderTasbih();
+}
+function saveTasbih() {
+  try { localStorage.setItem(TASBIH_KEY, JSON.stringify(tasbihState)); } catch(e){}
+}
+function renderTasbih() {
+  document.getElementById('tasbihCount').textContent = toBn(tasbihState.count);
+  document.getElementById('tasbihTarget').textContent = tasbihState.target >= 9999 ? '∞' : toBn(tasbihState.target);
+  document.getElementById('tasbihSession').textContent = toBn(tasbihState.session);
+  document.querySelectorAll('.target-chip').forEach(el => {
+    const val = parseInt(el.textContent.replace(/[০-৯]/g, d => '০১২৩৪৫৬৭৮৯'.indexOf(d)));
+    el.classList.toggle('active', val === tasbihState.target || (tasbihState.target >= 9999 && el.textContent === '∞'));
+  });
+}
+function tasbihIncr() {
+  vibrate();
+  tasbihState.count++;
+  tasbihState.session++;
+  if (tasbihState.count === tasbihState.target) {
+    if (navigator.vibrate) navigator.vibrate([100,50,100,50,100]);
+    showToast('🎉 '+toBn(tasbihState.target)+' পূর্ণ হয়েছে!');
+  } else if (tasbihState.count % tasbihState.target === 0) {
+    if (navigator.vibrate) navigator.vibrate([100,50,100]);
+    showToast('✅ '+toBn(tasbihState.count)+' হয়েছে!');
+  }
+  renderTasbih();
+  saveTasbih();
+}
+function tasbihDecr() {
+  vibrate();
+  if (tasbihState.count <= 0) return;
+  tasbihState.count--;
+  renderTasbih();
+  saveTasbih();
+}
+function tasbihReset() {
+  vibrate();
+  if (!confirm('তাসবিহ কাউন্টার রিসেট করবেন?')) return;
+  tasbihState.count = 0;
+  renderTasbih();
+  saveTasbih();
+  showToast('🔄 রিসেট হয়েছে');
+}
+function setTarget(n, el) {
+  vibrate();
+  tasbihState.target = n;
+  document.querySelectorAll('.target-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderTasbih();
+  saveTasbih();
+}
+
+/* ============================================================
+   দোয়া ডেটা
+============================================================ */
+const DUAS = [
+  { cat:'ghum', title:'ঘুমানোর দোয়া',
+    arabic:'اللَّهُمَّ بِاسْمِكَ أَمُوتُ وَأَحْيَا',
+    bangla:'বিসমিকা আল্লাহুম্মা আমুতু ওয়া আহইয়া।',
+    meaning:'হে আল্লাহ! আপনার নামেই আমি মরি ও জীবিত হই।' },
+  { cat:'ghum', title:'ঘুমানোর আগে',
+    arabic:'اللَّهُمَّ قِنِي عَذَابَكَ يَوْمَ تَبْعَثُ عِبَادَكَ',
+    bangla:'আল্লাহুম্মা কিনি আযাবাকা ইয়াওমা তাবআসু ইবাদাক।',
+    meaning:'হে আল্লাহ! যেদিন আপনি বান্দাদের উঠাবেন সেদিন আপনার আজাব থেকে রক্ষা করুন।' },
+  { cat:'utha', title:'ঘুম থেকে উঠার দোয়া',
+    arabic:'الْحَمْدُ لِلَّهِ الَّذِي أَحْيَانَا بَعْدَ مَا أَمَاتَنَا وَإِلَيْهِ النُّشُورُ',
+    bangla:'আলহামদুলিল্লাহিল্লাজি আহইয়ানা বা\'দা মা আমাতানা ওয়া ইলাইহিন নুশুর।',
+    meaning:'সমস্ত প্রশংসা আল্লাহর, যিনি মৃত্যুর পর আমাদের জীবিত করেছেন এবং তাঁরই কাছে প্রত্যাবর্তন।' },
+  { cat:'khaowa', title:'খাওয়ার আগে',
+    arabic:'بِسْمِ اللهِ وَعَلَىٰ بَرَكَةِ اللهِ',
+    bangla:'বিসমিল্লাহি ওয়া আলা বারাকাতিল্লাহ।',
+    meaning:'আল্লাহর নামে এবং আল্লাহর বরকতের উপর ভরসা করে।' },
+  { cat:'khaowa', title:'খাওয়ার পরে',
+    arabic:'الْحَمْدُ لِلَّهِ الَّذِي أَطْعَمَنَا وَسَقَانَا وَجَعَلَنَا مِنَ الْمُسْلِمِينَ',
+    bangla:'আলহামদুলিল্লাহিল্লাজি আত\'আমানা ওয়া সাকানা ওয়া জা\'আলানা মিনাল মুসলিমিন।',
+    meaning:'সমস্ত প্রশংসা আল্লাহর, যিনি আমাদের খাওয়ালেন, পান করালেন এবং মুসলিম বানালেন।' },
+  { cat:'bathroom', title:'টয়লেটে প্রবেশের দোয়া',
+    arabic:'اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْخُبُثِ وَالْخَبَائِثِ',
+    bangla:'আল্লাহুম্মা ইন্নি আউযু বিকা মিনাল খুবসি ওয়াল খাবাইস।',
+    meaning:'হে আল্লাহ! আমি আপনার কাছে অপবিত্র পুরুষ ও নারী শয়তান থেকে আশ্রয় চাই।' },
+  { cat:'bathroom', title:'টয়লেট থেকে বের হওয়ার দোয়া',
+    arabic:'غُفْرَانَكَ، الْحَمْدُ لِلَّهِ الَّذِي أَذْهَبَ عَنِّي الْأَذَى وَعَافَانِي',
+    bangla:'গুফরানাকা।',
+    meaning:'হে আল্লাহ! আমি আপনার ক্ষমা প্রার্থনা করছি।' },
+  { cat:'safar', title:'সফরের দোয়া',
+    arabic:'سُبْحَانَ الَّذِي سَخَّرَ لَنَا هَٰذَا وَمَا كُنَّا لَهُ مُقْرِنِينَ وَإِنَّا إِلَىٰ رَبِّنَا لَمُنْقَلِبُونَ',
+    bangla:'সুবহানাল্লাজি সাখখারা লানা হাযা ওয়া মা কুন্না লাহু মুকরিনিন, ওয়া ইন্না ইলা রাব্বিনা লামুনকালিবুন।',
+    meaning:'পবিত্র সেই সত্তা, যিনি এটাকে আমাদের বশীভূত করেছেন, অথচ আমরা একে বশ করতে পারতাম না। নিশ্চয়ই আমরা আমাদের রবের কাছে ফিরে যাব।' },
+  { cat:'bipod', title:'বিপদে পড়ার দোয়া',
+    arabic:'لَا إِلَٰهَ إِلَّا أَنْتَ سُبْحَانَكَ إِنِّي كُنْتُ مِنَ الظَّالِمِينَ',
+    bangla:'লা ইলাহা ইল্লা আনতা সুবহানাকা ইন্নি কুনতু মিনাজ জালিমিন।',
+    meaning:'আপনি ছাড়া কোনো ইলাহ নেই, আপনি পবিত্র, নিশ্চয়ই আমি জালিমদের অন্তর্ভুক্ত।' },
+  { cat:'jnan', title:'জ্ঞান বাড়ানোর দোয়া',
+    arabic:'رَبِّ زِدْنِي عِلْمًا',
+    bangla:'রাব্বি যিদনি ইলমা।',
+    meaning:'হে আমার রব! আমার জ্ঞান বাড়িয়ে দিন।' },
+  { cat:'jnan', title:'উপকারী জ্ঞানের দোয়া',
+    arabic:'اللَّهُمَّ إِنِّي أَسْأَلُكَ عِلْمًا نَافِعًا وَرِزْقًا طَيِّبًا وَعَمَلًا مُتَقَبَّلًا',
+    bangla:'আল্লাহুম্মা ইন্নি আসআলুকা ইলমান নাফিআ, ওয়া রিযকান তায়্যিবা, ওয়া আমালান মুতাকাব্বালা।',
+    meaning:'হে আল্লাহ! আমি আপনার কাছে উপকারী জ্ঞান, পবিত্র রিযিক এবং কবুলযোগ্য আমল চাই।' },
+  { cat:'ghum', title:'বিপদ থেকে আশ্রয়',
+    arabic:'أَعُوذُ بِكَلِمَاتِ اللهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ',
+    bangla:'আউযু বিকালিমাতিল্লাহিত তাম্মাতি মিন শাররি মা খালাক।',
+    meaning:'আল্লাহর পরিপূর্ণ কালেমাসমূহের মাধ্যমে তাঁর সৃষ্টির অনিষ্ট থেকে আশ্রয় চাইছি।' }
+];
+
+function renderDuas(cat) {
+  const container = document.getElementById('duaContainer');
+  const filtered = cat === 'all' ? DUAS : DUAS.filter(d => d.cat === cat);
+  container.innerHTML = filtered.map(d => `
+    <div class="card">
+      <div class="title">🤲 ${d.title}</div>
+      <div class="arabic">${d.arabic}</div>
+      <div class="bangla"><strong>উচ্চারণ:</strong> ${d.bangla}</div>
+      <div class="note">${d.meaning}</div>
+    </div>
+  `).join('');
+}
+
+document.getElementById('duaCat').addEventListener('click', e => {
+  if (!e.target.classList.contains('cat-chip')) return;
+  document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+  e.target.classList.add('active');
+  renderDuas(e.target.dataset.cat);
+});
+
+/* ============================================================
+   পেজ নেভিগেশন
+============================================================ */
+document.querySelectorAll('.nav-btn[data-page]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    vibrate();
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const page = btn.dataset.page;
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-'+page).classList.add('active');
+    window.scrollTo({top:0, behavior:'smooth'});
+
+    const titles = {
+      amol: { t:'সকাল-সন্ধ্যা আমল', s:'আরবি • উচ্চারণ • অর্থ' },
+      tasbih: { t:'📿 তাসবিহ কাউন্টার', s:'যেকোনো জিকির গণনার জন্য' },
+      dua: { t:'🤲 দোয়া সমূহ', s:'দৈনন্দিন জীবনের দোয়া' }
+    };
+    document.getElementById('pageTitle').textContent = titles[page].t;
+    document.getElementById('pageSub').textContent = titles[page].s;
+    document.getElementById('topBtn').style.display = 'none';
+  });
+});
+
+/* ============================================================
+   রিসেট
+============================================================ */
+function resetDay(force) {
+  if (!force && !confirm('আজকের সব অগ্রগতি মুছে ফেলবেন?')) return;
+  vibrate();
+  state = { counts:{}, done:{}, date:todayStr() };
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('done'));
+  document.querySelectorAll('.counter-val span[id^="cnt-"]').forEach(el => el.textContent = '0');
+  document.querySelectorAll('.btn.done').forEach(b => b.classList.remove('done'));
+  saveState(); updateProgress();
+  showToast('🔄 রিসেট হয়েছে');
+  if (force) closePanel();
+}
+
+/* ============================================================
+   টোস্ট
+============================================================ */
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+/* ============================================================
+   অফলাইন
+============================================================ */
+const offlineBar = document.getElementById('offlineBar');
+function updateOnline() { offlineBar.classList.toggle('show', !navigator.onLine); }
+window.addEventListener('online', updateOnline);
+window.addEventListener('offline', updateOnline);
+
+/* ============================================================
+   Service Worker
+============================================================ */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => console.log('✅ SW registered:', reg.scope))
+      .catch(err => console.log('❌ SW failed:', err));
+  });
+}
+
+/* ============================================================
+   প্যানেল
+============================================================ */
+function openPanel() { document.getElementById('panel').classList.add('open'); }
+function closePanel() { document.getElementById('panel').classList.remove('open'); }
+document.getElementById('settingsBtn').addEventListener('click', openPanel);
+
+/* ============================================================
+   ইনিশিয়ালাইজ
+============================================================ */
+load();
+applyTheme();
+document.getElementById('vibeSwitch').classList.toggle('on', settings.vibe);
+document.getElementById('saveSwitch').classList.toggle('on', settings.save);
+document.getElementById('notifSwitch').classList.toggle('on', notifEnabled);
+if (userLoc) document.getElementById('locHint').textContent = userLoc.city;
+else document.getElementById('locHint').textContent = 'ঢাকা (ডিফল্ট)';
+
+Object.keys(state.counts).forEach(id => {
+  const el = document.getElementById('cnt-'+id);
+  if (el) el.textContent = state.counts[id];
+});
+Object.keys(state.done).forEach(id => {
+  if (state.done[id]) {
+    const card = document.querySelector('[data-id="'+id+'"]');
+    if (card) {
+      card.classList.add('done');
+      const btn = card.querySelector('.btn.primary');
+      if (btn) btn.classList.add('done');
+    }
+  }
+});
+
+updateOnline();
+updateProgress();
+renderDuas('all');
+loadTasbih();
+
+// নামাজের সময় লোড করি
+fetchPrayerTimes();
+// প্রতি ১ ঘণ্টায় রিফ্রেশ
+setInterval(fetchPrayerTimes, 60*60*1000);
+
+// নিরাপত্তা
+window.addEventListener('error', e => console.log('⚠️', e.message));
 </script>
 
 </body>
