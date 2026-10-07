@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b3d2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="সকাল-সন্ধ্যা আমল">
+<title>সকাল-সন্ধ্যা আমল</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-512.png">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Noto Sans Bengali', 'Segoe UI', Tahoma, sans-serif;
+    background: linear-gradient(160deg, #0b3d2e, #145c43, #0b3d2e);
+    background-attachment: fixed;
+    color: #f0f7f2;
+    padding: 16px;
+    padding-top: env(safe-area-inset-top, 16px);
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+    min-height: 100vh;
+    overscroll-behavior-y: contain;
+  }
+  header {
+    text-align: center;
+    padding: 18px 10px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 16px;
+    margin-bottom: 18px;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+  header h1 { font-size: 1.6rem; color: #ffe9a8; }
+  header p { font-size: 0.9rem; margin-top: 6px; color: #cfe8d9; }
+
+  .card {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    transition: transform .2s, background .2s;
+  }
+  .card:active { background: rgba(255,255,255,0.14); }
+
+  .num {
+    display: inline-block;
+    background: #ffe9a8;
+    color: #0b3d2e;
+    font-weight: bold;
+    border-radius: 50%;
+    width: 28px; height: 28px;
+    line-height: 28px;
+    text-align: center;
+    font-size: 0.85rem;
+    margin-left: 6px;
+  }
+  .title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .count {
+    background: #1e7a58;
+    color: #eafff4;
+    font-size: 0.75rem;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-right: auto;
+  }
+  .arabic {
+    direction: rtl;
+    font-family: 'Traditional Arabic', 'Amiri', 'Scheherazade New', serif;
+    font-size: 1.5rem;
+    line-height: 2.4rem;
+    text-align: right;
+    margin: 10px 0 6px;
+    color: #fff8e1;
+  }
+  .bismillah {
+    display: block;
+    text-align: center;
+    color: #ffe9a8;
+    font-size: 1.6rem;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px dashed rgba(255,233,168,0.4);
+  }
+  .bangla {
+    font-size: 0.92rem;
+    color: #d7ecdf;
+    line-height: 1.6;
+    margin-top: 4px;
+  }
+  .note {
+    font-size: 0.85rem;
+    color: #ffe9a8;
+    margin-top: 6px;
+    font-style: italic;
+  }
+  .time-badge {
+    display: inline-block;
+    background: #c0392b;
+    color: #fff;
+    font-size: 0.75rem;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-top: 8px;
+    margin-left: 6px;
+  }
+  .time-badge.fajr { background: #2980b9; }
+  .time-badge.maghrib { background: #d35400; }
+  .time-badge.isha { background: #6c3483; }
+
+  /* টপে ফ্লোটিং আপ বাটন */
+  #topBtn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #ffe9a8;
+    color: #0b3d2e;
+    border: none;
+    font-size: 22px;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    cursor: pointer;
+    display: none;
+    z-index: 99;
+    padding-bottom: 4px;
+    padding-bottom: calc(4px + env(safe-area-inset-bottom, 0));
+  }
+  #topBtn.show { display: block; }
+
+  /* অফলাইন স্ট্যাটাস */
+  #offlineBar {
+    display: none;
+    background: #c0392b;
+    color: #fff;
+    text-align: center;
+    padding: 6px;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+  }
+  #offlineBar.show { display: block; }
+
+  footer {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #a8c9b8;
+    padding: 20px 0 60px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🌅 সকাল-সন্ধ্যা আমল 🌙</h1>
+  <p>আরবি • উচ্চারণ • অর্থ • সংখ্যা</p>
+</header>
+
+<div id="offlineBar">📴 অফলাইন মোড — কনটেন্ট ক্যাশ থেকে লোড হয়েছে</div>
+
+<!-- ০ -->
+<div class="card">
+  <div class="title"><span class="num">০</span> আল্লাহু আকবার <span class="count">১ বার</span></div>
+  <div class="arabic">اللهُ أَكْبَرُ</div>
+  <div class="bangla">আল্লাহু আকবার — আল্লাহ সর্বশ্রেষ্ঠ।</div>
+</div>
+
+<!-- ১ -->
+<div class="card">
+  <div class="title"><span class="num">১</span> ইস্তেগফার <span class="count">৩ বার</span></div>
+  <div class="arabic">أَسْتَغْفِرُ اللهَ</div>
+  <div class="bangla">আস্তাগফিরুল্লাহ — আমি আল্লাহর কাছে ক্ষমা প্রার্থনা করছি।</div>
+</div>
+
+<!-- ২ -->
+<div class="card">
+  <div class="title"><span class="num">২</span> সালামের পরের দোয়া <span class="count">১ বার</span></div>
+  <div class="arabic">اللَّهُمَّ أَنْتَ السَّلَامُ وَمِنْكَ السَّلَامُ، تَبَارَكْتَ يَا ذَا الْجَلَالِ وَالْإِكْرَامِ</div>
+  <div class="bangla">আল্লাহুম্মা আনতাস সালাম, ওয়া মিনকাস সালাম, তাবারকতা ইয়া যাল জালালি ওয়াল ইকরাম।</div>
+</div>
+
+<!-- ৩ -->
+<div class="card">
+  <div class="title"><span class="num">৩</span> আয়াতুল কুরসি <span class="count">১ বার</span></div>
+  <div class="arabic">
+    <span class="bismillah">بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
+    اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ ۚ لَهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ ۗ مَنْ ذَا الَّذِي يَشْفَعُ عِنْدَهُ إِلَّا بِإِذْنِهِ ۚ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ ۖ وَلَا يُحِيطُونَ بِشَيْءٍ مِنْ عِلْمِهِ إِلَّا بِمَا شَاءَ ۚ وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ ۖ وَلَا يَئُودُهُ حِفْظُهُمَا ۚ وَهُوَ الْعَلِيُّ الْعَظِيمُ
+  </div>
+  <div class="bangla">বিসমিল্লাহির রাহমানির রাহিম — আল্লাহু লা ইলাহা ইল্লা হুয়াল হাইয়্যুল কাইয়্যুম… (আয়াতুল কুরসি)</div>
+</div>
+
+<!-- ৪ -->
+<div class="card">
+  <div class="title"><span class="num">৪</span> তাসবিহ <span class="count">৩৩ + ৩৩ + ৩৪</span></div>
+  <div class="arabic">سُبْحَانَ اللهِ • الْحَمْدُ لِلَّهِ • اللهُ أَكْبَرُ</div>
+  <div class="bangla">সুবহানাল্লাহ (৩৩), আলহামদুলিল্লাহ (৩৩), আল্লাহু আকবার (৩৪)</div>
+</div>
+
+<!-- ৫ -->
+<div class="card">
+  <div class="title"><span class="num">৫</span> লা ইলাহা ইল্লাল্লাহু ওয়াহদাহু… <span class="count">১০ বার</span></div>
+  <div class="arabic">لَا إِلَٰهَ إِلَّا اللهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ، وَهُوَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ</div>
+  <div class="bangla">লা ইলাহা ইল্লাল্লাহু ওয়াহদাহু লা শারিকা লাহু, লাহুল মুলকু ওয়া লাহুল হামদু, ওয়া হুয়া আলা কুল্লি শাইইন কাদির।</div>
+</div>
+
+<!-- ৬ -->
+<div class="card">
+  <div class="title"><span class="num">৬</span> সূরা ইখলাস <span class="count">৩ বার</span></div>
+  <div class="arabic">
+    <span class="bismillah">بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
+    قُلْ هُوَ اللهُ أَحَدٌ • اللهُ الصَّمَدُ • لَمْ يَلِدْ وَلَمْ يُولَدْ • وَلَمْ يَكُنْ لَهُ كُفُوًا أَحَدٌ
+  </div>
+  <div class="bangla">বিসমিল্লাহির রাহমানির রাহিম — কুল হুয়াল্লাহু আহাদ… (সূরা ইখলাস)</div>
+</div>
+
+<!-- ৭ -->
+<div class="card">
+  <div class="title"><span class="num">৭</span> সূরা ফালাক <span class="count">৩ বার</span></div>
+  <div class="arabic">
+    <span class="bismillah">بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
+    قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ • مِنْ شَرِّ مَا خَلَقَ • وَمِنْ شَرِّ غَاسِقٍ إِذَا وَقَبَ • وَمِنْ شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ • وَمِنْ شَرِّ حَاسِدٍ إِذَا حَسَدَ
+  </div>
+  <div class="bangla">বিসমিল্লাহির রাহমানির রাহিম — কুল আউযু বিরাব্বিল ফালাক… (সূরা ফালাক)</div>
+</div>
+
+<!-- ৮ -->
+<div class="card">
+  <div class="title"><span class="num">৮</span> সূরা নাস <span class="count">৩ বার</span></div>
+  <div class="arabic">
+    <span class="bismillah">بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
+    قُلْ أَعُوذُ بِرَبِّ النَّاسِ • مَلِكِ النَّاسِ • إِلَٰهِ النَّاسِ • مِنْ شَرِّ الْوَسْوَاسِ الْخَنَّاسِ • الَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ • مِنَ الْجِنَّةِ وَالنَّاسِ
+  </div>
+  <div class="bangla">বিসমিল্লাহির রাহমানির রাহিম — কুল আউযু বিরাব্বিন নাস… (সূরা নাস)</div>
+</div>
+
+<!-- ৯ -->
+<div class="card">
+  <div class="title"><span class="num">৯</span> আল্লাহুম্মা আইন্নি আলা যিকরিকা… <span class="count">১ বার</span></div>
+  <div class="arabic">اللَّهُمَّ أَعِنِّي عَلَىٰ ذِكْرِكَ وَشُكْرِكَ وَحُسْنِ عِبَادَتِكَ</div>
+  <div class="bangla">আল্লাহুম্মা আইন্নি আলা যিকরিকা ওয়া শুকরিকা ওয়া হুসনি ইবাদাতিক।</div>
+</div>
+
+<!-- ১০ -->
+<div class="card">
+  <div class="title"><span class="num">১০</span> আল্লাহুম্মা ইন্নি আসআলুকা… <span class="count">১ বার</span></div>
+  <div class="arabic">اللَّهُمَّ إِنِّي أَسْأَلُكَ الْهُدَىٰ وَالتُّقَىٰ وَالْعَفَافَ وَالْغِنَىٰ</div>
+  <div class="bangla">আল্লাহুম্মা ইন্নি আসআলুকাল হুদা ওয়াত তুকা ওয়াল আফাফা ওয়াল গিনা।</div>
+</div>
+
+<!-- ১১ -->
+<div class="card">
+  <div class="title"><span class="num">১১</span> বিসমিল্লাহিল্লাজি লাইয়াদু… <span class="count">৩ বার</span></div>
+  <div class="arabic">بِسْمِ اللهِ الَّذِي لَا يَضُرُّ مَعَ اسْمِهِ شَيْءٌ فِي الْأَرْضِ وَلَا فِي السَّمَاءِ وَهُوَ السَّمِيعُ الْعَلِيمُ</div>
+  <div class="bangla">বিসমিল্লাহিল্লাজি লা ইয়াদুররু মা'আসমিহি শাইউন ফিল আরদি ওয়া লা ফিস সামাই, ওয়া হুয়াস সামিউল আলিম।</div>
+</div>
+
+<!-- ১২ -->
+<div class="card">
+  <div class="title"><span class="num">১২</span> সূরা হাশরের শেষ ৩ আয়াত <span class="count">১ বার</span></div>
+  <div class="arabic">
+    <span class="bismillah">بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
+    هُوَ اللهُ الَّذِي لَا إِلَٰهَ إِلَّا هُوَ ۖ عَالِمُ الْغَيْبِ وَالشَّهَادَةِ ۖ هُوَ الرَّحْمَٰنُ الرَّحِيمُ • هُوَ اللهُ الَّذِي لَا إِلَٰهَ إِلَّا هُوَ الْمَلِكُ الْقُدُّوسُ السَّلَامُ الْمُؤْمِنُ الْمُهَيْمِنُ الْعَزِيزُ الْجَبَّارُ الْمُتَكَبِّرُ ۚ سُبْحَانَ اللهِ عَمَّا يُشْرِكُونَ • هُوَ اللهُ الْخَالِقُ الْبَارِئُ الْمُصَوِّرُ ۖ لَهُ الْأَسْمَاءُ الْحُسْنَىٰ ۚ يُسَبِّحُ لَهُ مَا فِي السَّمَاوَاتِ وَالْأَرْضِ ۖ وَهُوَ الْعَزِيزُ الْحَكِيمُ
+  </div>
+  <div class="bangla">বিসমিল্লাহির রাহমানির রাহিম — হুয়াল্লাহুল্লাজি লা ইলাহা ইল্লা হুয়া… (সূরা হাশরের শেষ ৩ আয়াত)</div>
+</div>
+
+<!-- ১৩ -->
+<div class="card">
+  <div class="title"><span class="num">১৩</span> ওয়াননাযযিলু মিনাল কুরআনি… <span class="count">—</span></div>
+  <div class="arabic">
+    <span class="bismillah">بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
+    وَنُنَزِّلُ مِنَ الْقُرْآنِ مَا هُوَ شِفَاءٌ وَرَحْمَةٌ لِلْمُؤْمِنِينَ
+  </div>
+  <div class="bangla">বিসমিল্লাহির রাহমানির রাহিম — ওয়া নুনাযযিলু মিনাল কুরআনি মা হুয়া শিফাউ ওয়া রাহমাতুল লিল মুমিনিন।</div>
+</div>
+
+<!-- ১৪ -->
+<div class="card">
+  <div class="title"><span class="num">১৪</span> আউযু বিকালিমাতিল্লাহিত তাম্মাতি… <span class="count">—</span></div>
+  <div class="arabic">أَعُوذُ بِكَلِمَاتِ اللهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ</div>
+  <div class="bangla">আউযু বিকালিমাতিল্লাহিত তাম্মাতি মিন শাররি মা খালাক।</div>
+</div>
+
+<!-- ১৫ -->
+<div class="card">
+  <div class="title"><span class="num">১৫</span> আল্লাহুম্মা রাব্বান নাস… <span class="count">—</span></div>
+  <div class="arabic">اللَّهُمَّ رَبَّ النَّاسِ، أَذْهِبِ الْبَأْسَ، اشْفِ أَنْتَ الشَّافِي، لَا شِفَاءَ إِلَّا شِفَاؤُكَ، شِفَاءً لَا يُغَادِرُ سَقَمًا</div>
+  <div class="bangla">আল্লাহুম্মা রাব্বান নাস, আযহিবিল বা'স, ইশফি আনতাশ শাফি, লা শিফাআ ইল্লা শিফাউকা, শিফাআন লা ইউগাদিরু সাকামা।</div>
+  <div class="note">অর্থ: হে আল্লাহ, মানুষের রব! কষ্ট দূর করুন, আরোগ্য দিন — আপনিই আরোগ্যদাতা, আপনার আরোগ্য ছাড়া কোনো আরোগ্য নেই, এমন আরোগ্য দিন যা কোনো রোগই বাকি রাখে না।</div>
+</div>
+
+<!-- ১৬ -->
+<div class="card">
+  <div class="title"><span class="num">১৬</span> সাইয়েদুল ইস্তেগফার <span class="count">১ বার</span></div>
+  <div class="arabic">اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَٰهَ إِلَّا أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ، وَأَنَا عَلَىٰ عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ، أَعُوذُ بِكَ مِنْ شَرِّ مَا صَنَعْتُ، أَبُوءُ لَكَ بِنِعْمَتِكَ عَلَيَّ، وَأَبُوءُ بِذَنْبِي فَاغْفِرْ لِي فَإِنَّهُ لَا يَغْفِرُ الذُّنُوبَ إِلَّا أَنْتَ</div>
+  <div class="bangla">আল্লাহুম্মা আনতা রাব্বি লা ইলাহা ইল্লা আনতা… (সাইয়েদুল ইস্তেগফার)</div>
+</div>
+
+<!-- ১৭ -->
+<div class="card">
+  <div class="title"><span class="num">১৭</span> সুবহানাল্লাহি ওয়া বিহামদিহি <span class="count">১০০ বার</span></div>
+  <div class="arabic">سُبْحَانَ اللهِ وَبِحَمْدِهِ</div>
+  <div class="bangla">সুবহানাল্লাহি ওয়া বিহামদিহি।</div>
+</div>
+
+<!-- ১৮ -->
+<div class="card">
+  <div class="title"><span class="num">১৮</span> ইস্তেগফার <span class="count">১০০ বার</span></div>
+  <div class="arabic">أَسْتَغْفِرُ اللهَ وَأَتُوبُ إِلَيْهِ</div>
+  <div class="bangla">আস্তাগফিরুল্লাহা ওয়া আতুবু ইলাইহি।</div>
+</div>
+
+<!-- ১৯ -->
+<div class="card">
+  <div class="title"><span class="num">১৯</span> সালাতুল ইশরাক <span class="count">২ রাকাত</span></div>
+  <div class="bangla">সূর্য উঠার পর পরই (কমপক্ষে ১৫-২০ মিনিট পর) ২ রাকাত নফল নামাজ।</div>
+  <div class="note">সময়: সূর্যোদয়ের পর থেকে দ্বিপ্রহরের পূর্ব পর্যন্ত।</div>
+</div>
+
+<!-- ২০ -->
+<div class="card">
+  <div class="title"><span class="num">২০</span> নির্দিষ্ট সময়ের সূরা</div>
+
+  <div style="margin-top:10px;">
+    <span class="time-badge fajr">ফজরের পর</span>
+    <strong>সূরা ইয়াসিন</strong>
+    <div class="arabic">
+      <span class="bismillah">بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
+      يس • وَالْقُرْآنِ الْحَكِيمِ • إِنَّكَ لَمِنَ الْمُرْسَلِينَ • عَلَىٰ صِرَاطٍ مُسْتَقِيمٍ
+    </div>
+    <div class="bangla">বিসমিল্লাহির রাহমানির রাহিম — ইয়া সিন, ওয়াল কুরআনিল হাকিম… (সূরা ইয়াসিন)</div>
+  </div>
+
+  <div style="margin-top:14px;">
+    <span class="time-badge maghrib">মাগরিবের পর</span>
+    <strong>সূরা ওয়াকিয়া</strong>
+    <div class="arabic">
+      <span class="bismillah">بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
+      إِذَا وَقَعَتِ الْوَاقِعَةُ • لَيْسَ لِوَقْعَتِهَا كَاذِبَةٌ
+    </div>
+    <div class="bangla">বিসমিল্লাহির রাহমানির রাহিম — ইযা ওয়াকাআতিল ওয়াকিআ… (সূরা ওয়াকিয়া)</div>
+  </div>
+
+  <div style="margin-top:14px;">
+    <span class="time-badge isha">ইশার পর</span>
+    <strong>সূরা মুলক</strong>
+    <div class="arabic">
+      <span class="bismillah">بِسْمِ اللهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
+      تَبَارَكَ الَّذِي بِيَدِهِ الْمُلْكُ وَهُوَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ
+    </div>
+    <div class="bangla">বিসমিল্লাহির রাহমানির রাহিম — তাবারাকাল্লাজি বিয়াদিহিল মুলকু ওয়া হুয়া আলা কুল্লি শাইইন কাদির।</div>
+  </div>
+</div>
+
+<footer>
+  প্রতিদিন সকাল ও সন্ধ্যায় আমল করুন — ইনশাআল্লাহ উপকার পাবেন।
+</footer>
+
+<button id="topBtn" aria-label="উপরে যান">↑</button>
+
+<script>
+  // ===== Service Worker রেজিস্ট্রেশন =====
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+        .then(reg => console.log('✅ SW registered:', reg.scope))
+        .catch(err => console.log('❌ SW failed:', err));
+    });
+  }
+
+  // ===== অফলাইন/অনলাইন ডিটেকশন =====
+  const offlineBar = document.getElementById('offlineBar');
+  function updateStatus() {
+    if (!navigator.onLine) offlineBar.classList.add('show');
+    else offlineBar.classList.remove('show');
+  }
+  window.addEventListener('online', updateStatus);
+  window.addEventListener('offline', updateStatus);
+  updateStatus();
+
+  // ===== উপরে যাওয়ার বাটন =====
+  const topBtn = document.getElementById('topBtn');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 300) topBtn.classList.add('show');
+    else topBtn.classList.remove('show');
+  }, { passive: true });
+  topBtn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // ===== PWA ইনস্টল প্রম্পট (ঐচ্ছিক) =====
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    // চাইলে এখানে কাস্টম "Install" বাটন দেখাতে পারেন
+  });
+</script>
+
+</body>
+</html>
